@@ -106,7 +106,7 @@ public class EmailUtil {
         String subject = "Xác nhận tài khoản - Bookish Bliss Haven";
         String baseUrl = System.getenv("BASE_URL");
         if (baseUrl == null || baseUrl.isEmpty()) {
-            baseUrl = "https://jva-bookstore-17d2d34519f8.herokuapp.com"; // fallback Heroku URL
+            baseUrl = "http://localhost:8081"; // localhost URL
         }
         String verificationUrl = baseUrl + "/api/auth/verify?token=" + token;
 
@@ -140,7 +140,7 @@ public class EmailUtil {
     public static void sendResetEmail(String toEmail, String token, String username) {
         String baseUrl = System.getenv("BASE_URL");
         if (baseUrl == null || baseUrl.isEmpty()) {
-            baseUrl = "https://jva-bookstore-17d2d34519f8.herokuapp.com"; // fallback Heroku URL
+            baseUrl = "http://localhost:8081"; // localhost URL
         }
         String resetUrl = baseUrl + "/reset-password.jsp?token=" + token;
 

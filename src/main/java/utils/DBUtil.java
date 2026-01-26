@@ -31,8 +31,8 @@ public class DBUtil {
                 username = dbUri.getUserInfo().split(":")[0];
                 password = dbUri.getUserInfo().split(":")[1];
                 String jdbcUrl = "jdbc:postgresql://" + dbUri.getHost() + (dbUri.getPort() != -1 ? ":" + dbUri.getPort() : "") + dbUri.getPath();
-                // Ensure SSL for Heroku and UTF-8 encoding
-                url = jdbcUrl + "?sslmode=require&charSet=UTF-8";
+                // For local development, SSL is not required
+                url = jdbcUrl + "?charSet=UTF-8";
             } else {
                 try (InputStream input = DBUtil.class.getClassLoader().getResourceAsStream("db.properties")) {
                     if (input == null) {
