@@ -7,6 +7,8 @@ import utils.JwtUtil;
 import utils.DBUtil;
 import utils.EmailUtil;
 import utils.OTPUtil;
+import utils.PasswordValidator;
+import utils.SecurityManager;
 import dao.ShopDAO;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -70,6 +72,8 @@ public class AuthServlet extends HttpServlet {
         try {
             String username = req.getParameter("username");
             String password = req.getParameter("password");
+            String clientIp = req.getRemoteAddr();
+            String userAgent = req.getHeader("User-Agent");
 
             if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -77,9 +81,18 @@ public class AuthServlet extends HttpServlet {
                 return;
             }
 
+            // Check if account is locked
+            if (SecurityManager.isAccountLocked(username)) {
+                long minutesRemaining = SecurityManager.getAccountLockRemainingMinutes(username);
+                resp.setStatus(423); // HTTP 423 Locked
+                out.write("{\"error\":\"Tài khoản của bạn đã bị khóa. Vui lòng thử lại sau " + minutesRemaining + " phút\"}");
+                return;
+            }
+
             if (!DBUtil.userExists(username)) {
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 out.write("{\"error\":\"Invalid credentials\"}");
+                SecurityManager.recordFailedLogin(username, clientIp, userAgent, "User not found");
                 return;
             }
 
@@ -88,19 +101,30 @@ public class AuthServlet extends HttpServlet {
             if (hash == null || hash.trim().isEmpty()) {
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 out.write("{\"error\":\"Invalid credentials\"}");
+                SecurityManager.recordFailedLogin(username, clientIp, userAgent, "No password hash");
                 return;
             }
 
             if (BCrypt.checkpw(password, hash)) {
+                // Check if password is expired
+                if (SecurityManager.isPasswordExpired(username)) {
+                    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    long daysExpired = SecurityManager.getDaysUntilPasswordExpires(username);
+                    out.write("{\"error\":\"Mật khẩu của bạn đã hết hạn. Vui lòng thay đổi mật khẩu\",\"requirePasswordChange\":true}");
+                    return;
+                }
+                
                 // Check user status
                 String status = DBUtil.getUserStatus(username);
                 if ("inactive".equalsIgnoreCase(status)) {
                     resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     out.write("{\"error\":\"Tài khoản của bạn đang bị tạm khóa\"}");
+                    SecurityManager.recordFailedLogin(username, clientIp, userAgent, "Account inactive");
                     return;
                 } else if ("banned".equalsIgnoreCase(status)) {
                     resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     out.write("{\"error\":\"Tài khoản của bạn đã bị cấm\"}");
+                    SecurityManager.recordFailedLogin(username, clientIp, userAgent, "Account banned");
                     return;
                 }
 
@@ -112,6 +136,9 @@ public class AuthServlet extends HttpServlet {
                 String token = JwtUtil.generateToken(subject);
                 String role = DBUtil.getUserRole(username);
                 int userId = DBUtil.getUserIdByUsername(username);
+
+                // Record successful login
+                SecurityManager.recordSuccessfulLogin(username, clientIp, userAgent);
 
                 // ✅ Lưu session cho JSP
                 HttpSession session = req.getSession(true);
@@ -154,6 +181,7 @@ public class AuthServlet extends HttpServlet {
             } else {
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 out.write("{\"error\":\"Invalid credentials\"}");
+                SecurityManager.recordFailedLogin(username, clientIp, userAgent, "Invalid password");
             }
 
         } catch (Exception e) {
@@ -176,6 +204,14 @@ public class AuthServlet extends HttpServlet {
             return;
         }
 
+        // Validate password complexity
+        PasswordValidator.PasswordRequirement pwRequirement = PasswordValidator.validatePassword(password);
+        if (!pwRequirement.valid) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            out.write("{\"error\":\"" + pwRequirement.message + "\"}");
+            return;
+        }
+
         if (DBUtil.userExists(username)) {
             resp.setStatus(HttpServletResponse.SC_CONFLICT);
             out.write("{\"error\":\"Username already exists\"}");
@@ -194,6 +230,8 @@ public class AuthServlet extends HttpServlet {
         try {
             int userId = DBUtil.getUserIdByUsername(username);
             DBUtil.updateUserRole(userId, "customer", "active");
+            // Set password expiration for new users
+            SecurityManager.updatePasswordWithExpiration(username, hash);
         } catch (SQLException e) {
             System.err.println("Failed to set user role: " + e.getMessage());
         }
@@ -283,6 +321,14 @@ public class AuthServlet extends HttpServlet {
         }
 
         if (OTPUtil.verifyOTP(email, otp)) {
+            // Validate password complexity
+            PasswordValidator.PasswordRequirement pwRequirement = PasswordValidator.validatePassword(password);
+            if (!pwRequirement.valid) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.write("{\"error\":\"" + pwRequirement.message + "\"}");
+                return;
+            }
+            
             if (DBUtil.userExists(username)) {
                 resp.setStatus(HttpServletResponse.SC_CONFLICT);
                 out.write("{\"error\":\"Username already exists\"}");
@@ -300,6 +346,8 @@ public class AuthServlet extends HttpServlet {
             try {
                 int userId = DBUtil.getUserIdByUsername(username);
                 DBUtil.updateUserRole(userId, "customer", "active");
+                // Set password expiration for new users
+                SecurityManager.updatePasswordWithExpiration(username, hash);
             } catch (SQLException e) {
                 System.err.println("Failed to set user status: " + e.getMessage());
             }

@@ -36,9 +36,9 @@
     String footerCtx = request.getContextPath();
     List<String> rawCategories;
     try {
-        rawCategories = new ArrayList<>(BookDAO.getAllCategories());
+        rawCategories = new ArrayList(BookDAO.getAllCategories());
     } catch (Exception ex) {
-        rawCategories = new ArrayList<>();
+        rawCategories = new ArrayList();
     }
 
     String novelRaw = findMatchingCategory(rawCategories, "tieu thuyet", "fiction", "van hoc", "tac pham");
