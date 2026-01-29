@@ -134,6 +134,58 @@ public class DBUtil {
                     }
                 }
 
+                // Add security columns for failed login tracking
+                try {
+                    String addFailedLoginSQL = "ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0";
+                    stmt.execute(addFailedLoginSQL);
+                } catch (SQLException e) {
+                    // Ignore if column already exists
+                    if (!e.getMessage().contains("already exists")) {
+                        throw e;
+                    }
+                }
+
+                try {
+                    String addLockedUntilSQL = "ALTER TABLE users ADD COLUMN locked_until TIMESTAMP";
+                    stmt.execute(addLockedUntilSQL);
+                } catch (SQLException e) {
+                    // Ignore if column already exists
+                    if (!e.getMessage().contains("already exists")) {
+                        throw e;
+                    }
+                }
+
+                // Add security columns for password expiration
+                try {
+                    String addPasswordChangedSQL = "ALTER TABLE users ADD COLUMN password_changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
+                    stmt.execute(addPasswordChangedSQL);
+                } catch (SQLException e) {
+                    // Ignore if column already exists
+                    if (!e.getMessage().contains("already exists")) {
+                        throw e;
+                    }
+                }
+
+                try {
+                    String addPasswordExpiresSQL = "ALTER TABLE users ADD COLUMN password_expires_at TIMESTAMP";
+                    stmt.execute(addPasswordExpiresSQL);
+                } catch (SQLException e) {
+                    // Ignore if column already exists
+                    if (!e.getMessage().contains("already exists")) {
+                        throw e;
+                    }
+                }
+
+                try {
+                    String addForcePasswordChangeSQL = "ALTER TABLE users ADD COLUMN force_password_change BOOLEAN DEFAULT FALSE";
+                    stmt.execute(addForcePasswordChangeSQL);
+                } catch (SQLException e) {
+                    // Ignore if column already exists
+                    if (!e.getMessage().contains("already exists")) {
+                        throw e;
+                    }
+                }
+
                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)");
                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_users_reset_token ON users(reset_token)");
@@ -152,6 +204,60 @@ public class DBUtil {
                 
                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_otp_email ON otp_verifications(email)");
                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_otp_code ON otp_verifications(otp_code)");
+
+                // Create login_audit table for security logging
+                String createLoginAuditTableSQL = "CREATE TABLE IF NOT EXISTS login_audit (" +
+                    "id SERIAL PRIMARY KEY," +
+                    "user_id INTEGER REFERENCES users(id) ON DELETE CASCADE," +
+                    "username VARCHAR(50)," +
+                    "ip_address VARCHAR(45)," +
+                    "user_agent TEXT," +
+                    "login_status VARCHAR(50)," +
+                    "failure_reason VARCHAR(255)," +
+                    "attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+                stmt.execute(createLoginAuditTableSQL);
+                stmt.execute("CREATE INDEX IF NOT EXISTS idx_login_audit_user ON login_audit(user_id)");
+                stmt.execute("CREATE INDEX IF NOT EXISTS idx_login_audit_username ON login_audit(username)");
+                stmt.execute("CREATE INDEX IF NOT EXISTS idx_login_audit_attempted_at ON login_audit(attempted_at)");
+
+                // Create password_history table to prevent password reuse
+                String createPasswordHistoryTableSQL = "CREATE TABLE IF NOT EXISTS password_history (" +
+                    "id SERIAL PRIMARY KEY," +
+                    "user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE," +
+                    "old_password_hash VARCHAR(255) NOT NULL," +
+                    "changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+                stmt.execute(createPasswordHistoryTableSQL);
+                stmt.execute("CREATE INDEX IF NOT EXISTS idx_password_history_user ON password_history(user_id)");
+
+                // Create security_settings table for global security configurations
+                String createSecuritySettingsTableSQL = "CREATE TABLE IF NOT EXISTS security_settings (" +
+                    "id SERIAL PRIMARY KEY," +
+                    "setting_key VARCHAR(100) UNIQUE NOT NULL," +
+                    "setting_value VARCHAR(255)," +
+                    "setting_type VARCHAR(50)," +
+                    "description TEXT," +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                    "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+                stmt.execute(createSecuritySettingsTableSQL);
+
+                // Insert default security settings
+                String insertSecuritySettingsSQL = "INSERT INTO security_settings (setting_key, setting_value, setting_type, description) " +
+                    "VALUES " +
+                    "('max_failed_login_attempts', '5', 'integer', 'Maximum number of failed login attempts before lockout'), " +
+                    "('lockout_duration_minutes', '30', 'integer', 'Minutes to lock account after max failed attempts'), " +
+                    "('password_expiry_days', '90', 'integer', 'Number of days before password expires'), " +
+                    "('password_min_length', '8', 'integer', 'Minimum password length'), " +
+                    "('password_require_uppercase', 'true', 'boolean', 'Password must contain uppercase letters'), " +
+                    "('password_require_lowercase', 'true', 'boolean', 'Password must contain lowercase letters'), " +
+                    "('password_require_numbers', 'true', 'boolean', 'Password must contain numbers'), " +
+                    "('password_require_special', 'true', 'boolean', 'Password must contain special characters'), " +
+                    "('password_history_count', '5', 'integer', 'Number of previous passwords to prevent reuse') " +
+                    "ON CONFLICT (setting_key) DO NOTHING";
+                stmt.execute(insertSecuritySettingsSQL);
 
                 // Core catalog tables
                 String createBooksTableSQL = "CREATE TABLE IF NOT EXISTS books (" +
