@@ -877,6 +877,17 @@ public class DBUtil {
             System.err.println("DBUtil - Unable to inspect column " + table + "." + column + ": " + ex.getMessage());
             return;
         }
+
+        // Drop triggers on orders.status before altering column type
+        if ("orders".equals(table) && "status".equals(column)) {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("DROP TRIGGER IF EXISTS trg_update_shipment_status ON orders");
+                stmt.execute("DROP FUNCTION IF EXISTS update_shipment_status_from_order() CASCADE");
+            } catch (SQLException ex) {
+                System.err.println("DBUtil - Warning: Could not drop trigger: " + ex.getMessage());
+            }
+        }
+
         String typeSql = "ALTER TABLE " + table + " ALTER COLUMN " + column + " TYPE VARCHAR(" + length + ") USING " + column + "::text";
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(typeSql);
@@ -894,6 +905,35 @@ public class DBUtil {
                     System.err.println("DBUtil - Unable to set default for " + table + "." + column + ": " + ex.getMessage());
                 }
             }
+        }
+
+        // Recreate triggers on orders.status after altering column type
+        if ("orders".equals(table) && "status".equals(column)) {
+            recreateShipmentStatusTrigger(conn);
+        }
+    }
+
+    private static void recreateShipmentStatusTrigger(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            // Create function
+            String functionSql = "CREATE OR REPLACE FUNCTION update_shipment_status_from_order() RETURNS TRIGGER AS $$ " +
+                    "BEGIN " +
+                    "  IF NEW.status = 'shipped' THEN " +
+                    "    UPDATE shipments SET status = 'in_transit' WHERE order_id = NEW.id; " +
+                    "  ELSIF NEW.status = 'delivered' THEN " +
+                    "    UPDATE shipments SET status = 'delivered' WHERE order_id = NEW.id; " +
+                    "  END IF; " +
+                    "  RETURN NEW; " +
+                    "END $$ LANGUAGE plpgsql";
+            stmt.execute(functionSql);
+
+            // Create trigger
+            String triggerSql = "CREATE TRIGGER trg_update_shipment_status " +
+                    "AFTER UPDATE OF status ON orders " +
+                    "FOR EACH ROW EXECUTE FUNCTION update_shipment_status_from_order()";
+            stmt.execute(triggerSql);
+        } catch (SQLException ex) {
+            System.err.println("DBUtil - Warning: Could not recreate trigger: " + ex.getMessage());
         }
     }
 
@@ -1231,7 +1271,148 @@ public class DBUtil {
         }
     }
 
+    /**
+     * Get security setting from database
+     */
+    public static String getSecuritySetting(String settingKey, String defaultValue) throws SQLException {
+        String sql = "SELECT setting_value FROM security_settings WHERE setting_key = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, settingKey);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("setting_value");
+                }
+                return defaultValue;
+            }
+        }
+    }
 
+    /**
+     * Update security setting in database
+     */
+    public static void updateSecuritySetting(String settingKey, String newValue) throws SQLException {
+        String sql = "UPDATE security_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newValue);
+            pstmt.setString(2, settingKey);
+            pstmt.executeUpdate();
+        }
+    }
+
+    /**
+     * OAuth-related methods
+     */
+    
+    public static Long findOAuthAccount(String provider, String providerUserId) throws SQLException {
+        String sql = "SELECT user_id FROM oauth_accounts WHERE provider_name = ? AND provider_user_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, provider);
+            pstmt.setString(2, providerUserId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("user_id");
+                }
+                return null;
+            }
+        }
+    }
+
+    public static void updateOAuthLastLogin(Long userId, String provider) throws SQLException {
+        String sql = "UPDATE oauth_accounts SET last_login_at = CURRENT_TIMESTAMP WHERE user_id = ? AND provider_name = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, userId);
+            pstmt.setString(2, provider);
+            pstmt.executeUpdate();
+        }
+    }
+
+    public static void createOAuthAccount(Long userId, String provider, Object profileData) throws SQLException {
+        // This would need the actual profile data structure
+        String sql = "INSERT INTO oauth_accounts (user_id, provider_name, provider_user_id, linked_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, userId);
+            pstmt.setString(2, provider);
+            pstmt.setString(3, ""); // provider_user_id would come from profileData
+            pstmt.executeUpdate();
+        }
+    }
+
+    public static Long createOAuthUser(String username, String email, String passwordHash) throws SQLException {
+        String sql = "INSERT INTO users (username, email, password_hash, email_verified) VALUES (?, ?, ?, true) RETURNING id";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, email);
+            pstmt.setString(3, passwordHash);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("id");
+                }
+                return null;
+            }
+        }
+    }
+
+    public static Long getUserIdByEmail(String email) throws SQLException {
+        String sql = "SELECT id FROM users WHERE email = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, email);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("id");
+                }
+                return null;
+            }
+        }
+    }
+
+    public static String getUsernameById(Long userId) throws SQLException {
+        String sql = "SELECT username FROM users WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("username");
+                }
+                return null;
+            }
+        }
+    }
+
+    public static String getEmailById(Long userId) throws SQLException {
+        String sql = "SELECT email FROM users WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("email");
+                }
+                return null;
+            }
+        }
+    }
+
+    public static boolean isOAuthProviderEnabled(String provider) throws SQLException {
+        String sql = "SELECT enabled FROM oauth_providers WHERE provider_name = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, provider);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean("enabled");
+                }
+                return false;
+            }
+        }
+    }
 
    
 }
