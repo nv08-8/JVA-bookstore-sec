@@ -1,6 +1,7 @@
 package web;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import dao.CartDAO;
 import models.Cart;
@@ -20,6 +21,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +33,11 @@ import java.util.regex.Pattern;
 @WebServlet(name = "CartServlet", urlPatterns = {"/api/cart", "/api/cart/*"})
 public class CartServlet extends HttpServlet {
 
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, 
+                (com.google.gson.JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) -> 
+                    new com.google.gson.JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+            .create();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
