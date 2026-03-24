@@ -1,6 +1,7 @@
 package web;
 
 import com.google.gson.Gson;
+import utils.GsonHelper;
 import dao.ShipperDAO;
 import dao.UserAddressDAO;
 import models.Shipper;
@@ -24,7 +25,7 @@ import java.util.Map;
 @WebServlet(name = "ShippingQuoteServlet", urlPatterns = {"/api/shipping/quote"})
 public class ShippingQuoteServlet extends HttpServlet {
 
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonHelper.getInstance();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -102,4 +103,5 @@ public class ShippingQuoteServlet extends HttpServlet {
         resp.getWriter().write(gson.toJson(payload));
     }
 }
+
 

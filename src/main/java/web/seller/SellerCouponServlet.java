@@ -1,6 +1,7 @@
 package web.seller;
 
 import com.google.gson.Gson;
+import utils.GsonHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dao.ShopCouponDAO;
@@ -29,7 +30,7 @@ import java.util.logging.Logger;
 public class SellerCouponServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(SellerCouponServlet.class.getName());
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonHelper.getInstance();
 
     private void setEncoding(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         req.setCharacterEncoding("UTF-8");
@@ -343,3 +344,4 @@ public class SellerCouponServlet extends HttpServlet {
         }
     }
 }
+

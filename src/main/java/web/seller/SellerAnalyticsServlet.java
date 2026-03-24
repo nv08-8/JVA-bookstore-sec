@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
+import utils.GsonHelper;
 import dao.OrderDAO;
 import dao.BookDAO;
 import dao.ShopDAO;
@@ -23,7 +24,7 @@ import static javax.servlet.http.HttpServletResponse.*;
 @WebServlet("/api/seller/analytics")
 public class SellerAnalyticsServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(SellerAnalyticsServlet.class.getName());
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonHelper.getInstance();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -123,3 +124,4 @@ public class SellerAnalyticsServlet extends HttpServlet {
         out.write(gson.toJson(Map.of("success", true, "data", revenueData)));
     }
 }
+

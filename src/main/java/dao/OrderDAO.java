@@ -1497,9 +1497,13 @@ public static int countTotalOrders(int shopId) throws SQLException {
                 }
             }
         }
-        if (cartData.cartId == null) {
-            throw new SQLException("Không tìm thấy giỏ hàng để thanh toán");
+        
+        // Fallback: If cart not found in database, build from selections (BUY_NOW mode)
+        if (cartData.cartId == null || cartData.items.isEmpty()) {
+            System.out.println("OrderDAO: Cart not found for user " + userId + ", falling back to BUY_NOW mode");
+            return buildBuyNowCartData(conn, selections);
         }
+        
         if (cartData.items.size() != selectionMap.size()) {
             throw new SQLException("Một số sản phẩm đã bị xoá khỏi giỏ hàng, vui lòng tải lại trang");
         }

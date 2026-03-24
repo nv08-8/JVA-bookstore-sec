@@ -16,11 +16,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
+import utils.GsonHelper;
 
 @WebServlet("/api/seller/profile")
 public class SellerProfileServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(SellerProfileServlet.class.getName());
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonHelper.getInstance();
 
     private void setEncoding(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         req.setCharacterEncoding("UTF-8");
@@ -216,3 +217,4 @@ public class SellerProfileServlet extends HttpServlet {
         return Math.round(rawRate * 100.0) / 100.0;
     }
 }
+

@@ -1,6 +1,7 @@
 package web;
 
 import com.google.gson.Gson;
+import utils.GsonHelper;
 import com.google.gson.reflect.TypeToken;
 import dao.ReviewDAO;
 import utils.AuthUtil;
@@ -24,7 +25,7 @@ import java.util.Map;
 @MultipartConfig
 public class ReviewServlet extends HttpServlet {
 
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonHelper.getInstance();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -321,3 +322,4 @@ public class ReviewServlet extends HttpServlet {
         private boolean removeMedia;
     }
 }
+

@@ -1,6 +1,7 @@
 package web.seller;
 
 import com.google.gson.Gson;
+import utils.GsonHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dao.ShopDAO;
@@ -33,7 +34,7 @@ public class SellerProductsServlet extends HttpServlet {
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
 
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonHelper.getInstance();
 
     private void setEncoding(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         req.setCharacterEncoding("UTF-8");
@@ -523,3 +524,4 @@ public class SellerProductsServlet extends HttpServlet {
         }
     }
 }
+

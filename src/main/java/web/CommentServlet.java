@@ -1,6 +1,7 @@
 package web;
 
 import com.google.gson.Gson;
+import utils.GsonHelper;
 import com.google.gson.reflect.TypeToken;
 import dao.CommentDAO;
 import utils.AuthUtil;
@@ -20,7 +21,7 @@ import java.util.Map;
 @WebServlet(name = "CommentServlet", urlPatterns = {"/api/comments", "/api/comments/*"})
 public class CommentServlet extends HttpServlet {
 
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonHelper.getInstance();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -200,3 +201,4 @@ public class CommentServlet extends HttpServlet {
         response.getWriter().write(gson.toJson(buildError("Có lỗi xảy ra: " + ex.getMessage())));
     }
 }
+
