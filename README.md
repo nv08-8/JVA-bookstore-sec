@@ -68,6 +68,52 @@
    hoac `mvn tomcat8:run`.
 6. Trien khai Heroku/Render: su dung `Procfile` (`web: java $JAVA_OPTS -jar target/dependency/webapp-runner.jar --port $PORT target/ROOT.war`) va `app.json`.
 
+## Chay HTTPS local (Windows, webapp-runner)
+
+Du an nay dang chay bang `webapp-runner` (Tomcat nhung), khong phai Spring Boot. Vi vay de mo HTTPS local, can cap `PKCS12 keystore` cho Java.
+
+### 1) Tao cert + localhost.p12 bang mkcert
+
+Da co san script tu dong:
+
+```bat
+setup-local-https-cert.bat
+```
+
+Script se:
+- chay `mkcert -install`
+- tao `localhost.pem` va `localhost-key.pem`
+- tao `localhost.p12` bang `-pkcs12`
+
+### 2) Chay script HTTPS
+
+Da co san script:
+
+```bat
+run-localhost-https.bat
+```
+
+Script se:
+- build WAR
+- bat SSL voi `--enable-ssl`
+- doc keystore `localhost.p12`
+- chay tai `https://localhost:8443`
+
+### Luu y ve password keystore
+
+- `run-localhost-https.bat` dang de mac dinh `KEYSTORE_PASS=changeit`.
+- Neu startup SSL bao loi password keystore, sua `KEYSTORE_PASS` thanh rong (de trong dau ngoac kep).
+
+### Neu chua co mkcert
+
+- Em co the cai bang `winget` neu co quyen:
+
+```powershell
+winget install FiloSottile.mkcert
+```
+
+Sau do mo terminal moi de cap nhat PATH.
+
 ## Du lieu khoi tao
 - `utils/BookDataLoader` tu dong seed `books_full_5xx.csv` neu bang `books` rong (doc tu classpath hoac file he thong).
 - File CSV thuc te `books_full_9xx.csv` co the dung de nhap them (chinh `BookDataLoader` neu muon).
