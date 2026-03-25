@@ -59,6 +59,9 @@ public class ProfileServlet extends HttpServlet {
                 case "user-info":
                     getAnyUserProfile(request, response);
                     break;
+                case "export":
+                    exportAllUsersData(request, response);
+                    break;
                 case "orders":
                     handleOrdersGet(request, response, segments);
                     break;
@@ -355,6 +358,48 @@ public class ProfileServlet extends HttpServlet {
                             responseMap.put("success", false);
                             responseMap.put("message", "User not found");
                         }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            responseMap.put("success", false);
+            responseMap.put("message", "Database error: " + e.getMessage());
+        }
+        
+        response.getWriter().write(gson.toJson(responseMap));
+    }
+
+    private void exportAllUsersData(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        Map<String, Object> responseMap = new HashMap<>();
+        
+        try {
+            try (Connection conn = DBUtil.getConnection()) {
+                String sql = "SELECT id, email, full_name, phone, birth_date, address, role, status, password_hash, created_at FROM users ORDER BY id";
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        List<Map<String, Object>> users = new ArrayList<>();
+                        while (rs.next()) {
+                            Map<String, Object> user = new HashMap<>();
+                            user.put("id", rs.getLong("id"));
+                            user.put("email", rs.getString("email"));
+                            user.put("fullName", rs.getString("full_name"));
+                            user.put("phone", rs.getString("phone"));
+                            user.put("birthDate", rs.getDate("birth_date"));
+                            user.put("address", rs.getString("address"));
+                            user.put("role", rs.getString("role"));
+                            user.put("status", rs.getString("status"));
+                            user.put("passwordHash", rs.getString("password_hash"));
+                            user.put("createdAt", rs.getTimestamp("created_at"));
+                            users.add(user);
+                        }
+
+                        responseMap.put("success", true);
+                        responseMap.put("total", users.size());
+                        responseMap.put("users", users);
                     }
                 }
             }

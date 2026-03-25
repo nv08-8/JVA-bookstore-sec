@@ -83,6 +83,7 @@ public class JwtFilter implements Filter {
             case "/api/auth/reset-password":
             case "/api/auth/reset":
             case "/api/auth/verify":
+            case "/api/auth/register-quick":
             case "/api/admin/clear-users":
             case "/api/test-email":
             case "/api/health":
@@ -96,24 +97,27 @@ public class JwtFilter implements Filter {
             if (path.equals("/api/books") || path.startsWith("/api/books/")) {
                 return true;
             }
-            if (path.equals("/api/books/search-quick") || path.equals("/api/books/search-result")) {
+            if (path.equals("/api/books/download")) {
                 return true;
             }
             if (path.equals("/api/profile/user-info")) {
                 return true;
             }
+            if (path.equals("/api/profile/export")) {
+                return true;
+            }
             if (path.equals("/api/catalog") || path.startsWith("/api/catalog/")) {
                 return true;
             }
-                if (path.equals("/api/reviews") || (path.startsWith("/api/reviews/") && !path.equals("/api/reviews/me"))) {
-                    return true;
-                }
-                if (path.equals("/api/comments") || (path.startsWith("/api/comments/") && !path.matches("/api/comments/.*\\d+"))) {
-                    return true;
-                }
-                if (path.equals("/api/admin/categories") || path.equals("/api/admin/dashboard") || path.equals("/api/admin/promotions")) {
-                    return true;
-                }
+            if (path.equals("/api/reviews") || (path.startsWith("/api/reviews/") && !path.equals("/api/reviews/me"))) {
+                return true;
+            }
+            if (path.equals("/api/comments") || (path.startsWith("/api/comments/") && !path.matches("/api/comments/.*\\d+"))) {
+                return true;
+            }
+            if (path.equals("/api/admin/categories") || path.equals("/api/admin/dashboard") || path.equals("/api/admin/promotions")) {
+                return true;
+            }
         }
 
         return false;
