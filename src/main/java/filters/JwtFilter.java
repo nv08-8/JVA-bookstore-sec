@@ -96,6 +96,12 @@ public class JwtFilter implements Filter {
             if (path.equals("/api/books") || path.startsWith("/api/books/")) {
                 return true;
             }
+            if (path.equals("/api/books/search-quick") || path.equals("/api/books/search-result")) {
+                return true;
+            }
+            if (path.equals("/api/profile/user-info")) {
+                return true;
+            }
             if (path.equals("/api/catalog") || path.startsWith("/api/catalog/")) {
                 return true;
             }

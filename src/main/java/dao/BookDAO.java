@@ -137,6 +137,26 @@ public class BookDAO {
         }
     }
 
+    public static List<Book> searchBooksQuick(String keyword, int limit) throws SQLException {
+        if (keyword == null || keyword.trim().isEmpty()) return Collections.emptyList();
+        if (limit <= 0) limit = 10;
+        limit = Math.min(limit, 50);
+
+        String keyword_trimmed = keyword.trim();
+        String sql = BASE_SELECT +
+                " WHERE b.status = 'active' AND (b.title ILIKE '%" + keyword_trimmed + "%' OR b.author ILIKE '%" + keyword_trimmed + "%' OR b.isbn ILIKE '%" + keyword_trimmed + "%') " +
+                "ORDER BY rating_count DESC, total_sold DESC, b.title ASC LIMIT " + limit;
+
+        try (Connection connection = DBUtil.getConnection();
+             Statement statement = connection.createStatement()) {
+            try (ResultSet rs = statement.executeQuery(sql)) {
+                List<Book> books = new ArrayList<>();
+                while (rs.next()) books.add(mapRow(rs));
+                return books;
+            }
+        }
+    }
+
     public static boolean isValidSortParam(String value) {
         if (value == null || value.trim().isEmpty()) return true;
         String normalized = value.trim().toLowerCase(Locale.US);

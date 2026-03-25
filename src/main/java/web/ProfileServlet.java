@@ -56,6 +56,9 @@ public class ProfileServlet extends HttpServlet {
         String resource = segments.get(0);
         try {
             switch (resource) {
+                case "user-info":
+                    getAnyUserProfile(request, response);
+                    break;
                 case "orders":
                     handleOrdersGet(request, response, segments);
                     break;
@@ -278,6 +281,71 @@ public class ProfileServlet extends HttpServlet {
                             user.put("phone", rs.getString("phone"));
                             user.put("birthDate", rs.getDate("birth_date"));
                             user.put("address", rs.getString("address"));
+                            user.put("createdAt", rs.getTimestamp("created_at"));
+
+                            responseMap.put("success", true);
+                            responseMap.put("user", user);
+                        } else {
+                            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                            responseMap.put("success", false);
+                            responseMap.put("message", "User not found");
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            responseMap.put("success", false);
+            responseMap.put("message", "Database error: " + e.getMessage());
+        }
+        
+        response.getWriter().write(gson.toJson(responseMap));
+    }
+
+    private void getAnyUserProfile(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        Map<String, Object> responseMap = new HashMap<>();
+        
+        try {
+            String userIdParam = request.getParameter("userId");
+            if (userIdParam == null || userIdParam.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                responseMap.put("success", false);
+                responseMap.put("message", "userId parameter is required");
+                response.getWriter().write(gson.toJson(responseMap));
+                return;
+            }
+
+            long userId;
+            try {
+                userId = Long.parseLong(userIdParam);
+            } catch (NumberFormatException e) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                responseMap.put("success", false);
+                responseMap.put("message", "Invalid userId");
+                response.getWriter().write(gson.toJson(responseMap));
+                return;
+            }
+
+            try (Connection conn = DBUtil.getConnection()) {
+                ensureUserProfileColumns(conn);
+                String sql = "SELECT id, email, full_name, phone, birth_date, address, role, status, created_at FROM users WHERE id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setLong(1, userId);
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            Map<String, Object> user = new HashMap<>();
+                            user.put("id", rs.getLong("id"));
+                            user.put("username", rs.getString("email"));
+                            user.put("email", rs.getString("email"));
+                            user.put("fullName", rs.getString("full_name"));
+                            user.put("phone", rs.getString("phone"));
+                            user.put("birthDate", rs.getDate("birth_date"));
+                            user.put("address", rs.getString("address"));
+                            user.put("role", rs.getString("role"));
+                            user.put("status", rs.getString("status"));
                             user.put("createdAt", rs.getTimestamp("created_at"));
 
                             responseMap.put("success", true);

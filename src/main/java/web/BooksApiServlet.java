@@ -60,6 +60,12 @@ public class BooksApiServlet extends HttpServlet {
                 case "/search":
                     handleSearch(req, resp);
                     break;
+                case "/search-quick":
+                    handleSearchQuick(req, resp);
+                    break;
+                case "/search-result":
+                    handleSearchResult(req, resp);
+                    break;
                 case "/":
                 default:
                     handleCatalogList(req, resp);
@@ -119,6 +125,41 @@ public class BooksApiServlet extends HttpServlet {
         payload.add("data", toBookJsonArray(books));
         payload.addProperty("count", books.size());
         writeJson(resp, payload);
+    }
+
+    private void handleSearchQuick(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
+        String keyword = trimToNull(req.getParameter("q"));
+        int limit = parsePositiveInt(req.getParameter("limit"), 10, 50);
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("query", keyword == null ? "" : keyword);
+
+        if (keyword == null || keyword.length() < 1) {
+            payload.add("data", new JsonArray());
+            payload.addProperty("count", 0);
+            payload.addProperty("message", "Nhập từ khóa để tìm kiếm sách");
+            writeJson(resp, payload);
+            return;
+        }
+
+        List<Book> books = BookDAO.searchBooksQuick(keyword, limit);
+        payload.add("data", toBookJsonArray(books));
+        payload.addProperty("count", books.size());
+        writeJson(resp, payload);
+    }
+
+    private void handleSearchResult(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String keyword = trimToNull(req.getParameter("q"));
+        resp.setContentType("text/html; charset=UTF-8");
+
+        PrintWriter writer = resp.getWriter();
+        writer.println("<html>");
+        writer.println("<head><title>Search Result</title></head>");
+        writer.println("<body>");
+        writer.println("<h2>Kết quả tìm kiếm cho: " + keyword + "</h2>");
+        writer.println("<p>Bạn đã tìm kiếm: <strong>" + keyword + "</strong></p>");
+        writer.println("</body>");
+        writer.println("</html>");
     }
 
     private void handleCatalogList(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
