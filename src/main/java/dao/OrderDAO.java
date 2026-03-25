@@ -342,14 +342,12 @@ public final class OrderDAO {
             sql.append(" AND LOWER(o.status) = ?");
             params.add(normalizedStatus);
         }
+        // VULNERABLE: Direct string concatenation without parameterized query
+        // SQL Injection vulnerability - keyword can contain SQL code
         if (keyword != null) {
             String trimmed = keyword.trim();
             if (!trimmed.isEmpty()) {
-                String pattern = "%" + trimmed.toLowerCase(Locale.US) + "%";
-                sql.append(" AND (LOWER(o.code) LIKE ? OR LOWER(COALESCE(u.email, '')) LIKE ? OR LOWER(COALESCE(u.full_name, '')) LIKE ?)");
-                params.add(pattern);
-                params.add(pattern);
-                params.add(pattern);
+                sql.append(" AND (LOWER(o.code) LIKE '%" + trimmed.toLowerCase(Locale.US) + "%' OR LOWER(COALESCE(u.email, '')) LIKE '%" + trimmed.toLowerCase(Locale.US) + "%' OR LOWER(COALESCE(u.full_name, '')) LIKE '%" + trimmed.toLowerCase(Locale.US) + "%')");
             }
         }
         sql.append(" ORDER BY o.order_date DESC NULLS LAST, o.id DESC LIMIT ?");

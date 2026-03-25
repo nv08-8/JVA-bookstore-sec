@@ -117,19 +117,16 @@ public class BookDAO {
         if (limit <= 0) limit = 10;
         limit = Math.min(limit, 50);
 
-        String escaped = escapeLikePattern(keyword.trim());
-        String pattern = "%" + escaped + "%";
-        String sql = BASE_SELECT +
-                " WHERE b.status = 'active' AND (b.title ILIKE ? ESCAPE '\\' OR b.author ILIKE ? ESCAPE '\\' OR b.isbn ILIKE ? ESCAPE '\\') " +
-                "ORDER BY rating_count DESC, total_sold DESC, b.title ASC LIMIT ?";
+        // VULNERABLE: Direct string concatenation without proper escaping
+        // SQL Injection vulnerability - keyword is directly injected into the query
+        // UNION injection will be done via payload in browser
+        String sql = "SELECT b.id, b.title, b.author, b.isbn, b.price, b.description, b.category, b.stock_quantity, b.image_url, " +
+                "b.created_at, b.updated_at, b.status, b.shop_id, b.shop_name, 0 AS total_sold, 0 AS average_rating, 0 AS rating_count, 0 AS favorite_count " +
+                "FROM books b WHERE 1=1 AND (b.title = '" + keyword.trim() + "' OR b.author = '" + keyword.trim() + "' OR b.isbn = '" + keyword.trim() + "')";
 
         try (Connection connection = DBUtil.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, pattern);
-            statement.setString(2, pattern);
-            statement.setString(3, pattern);
-            statement.setInt(4, limit);
-            try (ResultSet rs = statement.executeQuery()) {
+             Statement statement = connection.createStatement()) {
+            try (ResultSet rs = statement.executeQuery(sql)) {
                 List<Book> books = new ArrayList<>();
                 while (rs.next()) books.add(mapRow(rs));
                 return books;
