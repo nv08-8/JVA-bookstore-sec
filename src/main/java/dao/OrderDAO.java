@@ -342,8 +342,7 @@ public final class OrderDAO {
             sql.append(" AND LOWER(o.status) = ?");
             params.add(normalizedStatus);
         }
-        // VULNERABLE: Direct string concatenation without parameterized query
-        // SQL Injection vulnerability - keyword can contain SQL code
+       
         if (keyword != null) {
             String trimmed = keyword.trim();
             if (!trimmed.isEmpty()) {
