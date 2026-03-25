@@ -105,39 +105,23 @@ public class BooksApiServlet extends HttpServlet {
     }
 
     private void handleSearch(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        String keyword = req.getParameter("q");
-        if (keyword == null) {
-            keyword = "";
-        }
+        String keyword = trimToNull(req.getParameter("q"));
         int limit = parsePositiveInt(req.getParameter("limit"), 10, 50);
 
         JsonObject payload = new JsonObject();
-        payload.addProperty("query", keyword);
+        payload.addProperty("query", keyword == null ? "" : keyword);
 
-        String sql = "SELECT b.id::text, b.title, b.author, b.isbn, b.price::text, b.description, b.category, b.stock_quantity::text " +
-                "FROM books b WHERE (b.title LIKE '%" + keyword + "%' OR b.author LIKE '%" + keyword + "%' OR b.isbn LIKE '%" + keyword + "%') LIMIT " + limit;
-        
-        try (Connection conn = DBUtil.getConnection();
-             Statement stmt = conn.createStatement()) {
-            try (ResultSet rs = stmt.executeQuery(sql)) {
-                JsonArray rows = new JsonArray();
-                while (rs.next()) {
-                    JsonObject row = new JsonObject();
-                    row.addProperty("col1", rs.getObject(1) != null ? rs.getObject(1).toString() : "");
-                    row.addProperty("col2", rs.getObject(2) != null ? rs.getObject(2).toString() : "");
-                    row.addProperty("col3", rs.getObject(3) != null ? rs.getObject(3).toString() : "");
-                    row.addProperty("col4", rs.getObject(4) != null ? rs.getObject(4).toString() : "");
-                    row.addProperty("col5", rs.getObject(5) != null ? rs.getObject(5).toString() : "");
-                    row.addProperty("col6", rs.getObject(6) != null ? rs.getObject(6).toString() : "");
-                    row.addProperty("col7", rs.getObject(7) != null ? rs.getObject(7).toString() : "");
-                    row.addProperty("col8", rs.getObject(8) != null ? rs.getObject(8).toString() : "");
-                    rows.add(row);
-                }
-                payload.add("data", rows);
-                payload.addProperty("count", rows.size());
-            }
+        if (keyword == null || keyword.length() < 1) {
+            payload.add("data", new JsonArray());
+            payload.addProperty("count", 0);
+            payload.addProperty("message", "Nhập từ khóa để tìm kiếm sách");
+            writeJson(resp, payload);
+            return;
         }
-        
+
+        List<Book> books = BookDAO.searchBooksQuick(keyword, limit);
+        payload.add("data", toBookJsonArray(books));
+        payload.addProperty("count", books.size());
         writeJson(resp, payload);
     }
 
