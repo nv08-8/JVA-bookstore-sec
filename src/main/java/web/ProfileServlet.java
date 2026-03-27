@@ -117,6 +117,9 @@ public class ProfileServlet extends HttpServlet {
         String resource = segments.get(0);
         try {
             switch (resource) {
+                case "password":
+                    changePassword(request, response);
+                    break;
                 case "addresses":
                     if (segments.size() == 1) {
                         createUserAddress(request, response);
@@ -436,7 +439,7 @@ public class ProfileServlet extends HttpServlet {
             String phone = (String) requestData.get("phone");
             String birthDateStr = (String) requestData.get("birthDate");
             String address = (String) requestData.get("address");
-            
+
             // Validate required fields
             if (fullName == null || fullName.trim().isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -445,20 +448,20 @@ public class ProfileServlet extends HttpServlet {
                 response.getWriter().write(gson.toJson(responseMap));
                 return;
             }
-            
+
             try (Connection conn = DBUtil.getConnection()) {
                 ensureUserProfileColumns(conn);
                 String sql = "UPDATE users SET full_name = ?, phone = ?, birth_date = ?, address = ? WHERE email = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setString(1, fullName.trim());
                     stmt.setString(2, phone != null ? phone.trim() : null);
-                    
+
                     if (birthDateStr != null && !birthDateStr.trim().isEmpty()) {
                         stmt.setDate(3, java.sql.Date.valueOf(LocalDate.parse(birthDateStr)));
                     } else {
                         stmt.setDate(3, null);
                     }
-                    
+
                     stmt.setString(4, address != null ? address.trim() : null);
                     stmt.setString(5, email);
                     
@@ -516,8 +519,16 @@ public class ProfileServlet extends HttpServlet {
         Map<String, Object> responseMap = new HashMap<>();
         
         try {
-            // Get user from JWT token
+            // Xác thực user qua JWT token hoặc session
             String email = getUserEmailFromRequest(request);
+            if (email == null) {
+                // Fallback: lấy email từ session
+                javax.servlet.http.HttpSession session = request.getSession(false);
+                if (session != null && session.getAttribute("username") != null) {
+                    String username = session.getAttribute("username").toString();
+                    email = utils.DBUtil.getEmailByUsername(username);
+                }
+            }
             if (email == null) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 responseMap.put("success", false);
@@ -525,23 +536,43 @@ public class ProfileServlet extends HttpServlet {
                 response.getWriter().write(gson.toJson(responseMap));
                 return;
             }
-            
-            // Parse request body
-            Map<String, Object> requestData = readJsonRequest(request);
-            
-            String currentPassword = (String) requestData.get("currentPassword");
-            String newPassword = (String) requestData.get("newPassword");
-            
+
+            // Đọc password fields từ form parameter hoặc JSON body
+            String currentPassword = request.getParameter("currentPassword");
+            String newPassword = request.getParameter("newPassword");
+            String confirmPassword = request.getParameter("confirmPassword");
+            if (newPassword == null) {
+                Map<String, Object> requestData = readJsonRequest(request);
+                currentPassword = (String) requestData.get("currentPassword");
+                newPassword = (String) requestData.get("newPassword");
+                confirmPassword = (String) requestData.get("confirmPassword");
+            }
+
             // Validate input
-            if (currentPassword == null || newPassword == null || 
-                currentPassword.trim().isEmpty() || newPassword.trim().isEmpty()) {
+            if (currentPassword == null || currentPassword.trim().isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 responseMap.put("success", false);
-                responseMap.put("message", "Current password and new password are required");
+                responseMap.put("message", "Current password is required");
                 response.getWriter().write(gson.toJson(responseMap));
                 return;
             }
-            
+
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                responseMap.put("success", false);
+                responseMap.put("message", "New password is required");
+                response.getWriter().write(gson.toJson(responseMap));
+                return;
+            }
+
+            if (confirmPassword == null || !newPassword.equals(confirmPassword)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                responseMap.put("success", false);
+                responseMap.put("message", "Mật khẩu xác nhận không khớp");
+                response.getWriter().write(gson.toJson(responseMap));
+                return;
+            }
+
             if (newPassword.length() < 6) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 responseMap.put("success", false);
@@ -549,47 +580,57 @@ public class ProfileServlet extends HttpServlet {
                 response.getWriter().write(gson.toJson(responseMap));
                 return;
             }
-            
+
             try (Connection conn = DBUtil.getConnection()) {
-                // First, verify current password
+                // Xác minh mật khẩu cũ
+                boolean passwordVerified = false;
                 String selectSql = "SELECT password_hash FROM users WHERE email = ?";
                 try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
                     selectStmt.setString(1, email);
                     try (ResultSet rs = selectStmt.executeQuery()) {
                         if (rs.next()) {
-                            String storedPassword = rs.getString("password_hash");
-
-                            if (storedPassword == null || !BCrypt.checkpw(currentPassword, storedPassword)) {
-                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                responseMap.put("success", false);
-                                responseMap.put("message", "Mật khẩu hiện tại không đúng");
-                                response.getWriter().write(gson.toJson(responseMap));
-                                return;
+                            String storedHash = rs.getString("password_hash");
+                            if (storedHash != null && BCrypt.checkpw(currentPassword, storedHash)) {
+                                passwordVerified = true;
                             }
-                            
-                            // Hash new password and update
-                            String hashedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
-                            
-                            String updateSql = "UPDATE users SET password_hash = ? WHERE email = ?";
-                            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-                                updateStmt.setString(1, hashedNewPassword);
-                                updateStmt.setString(2, email);
-                                
-                                int rowsUpdated = updateStmt.executeUpdate();
-                                if (rowsUpdated > 0) {
-                                    responseMap.put("success", true);
-                                    responseMap.put("message", "Password changed successfully");
-                                } else {
-                                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                    responseMap.put("success", false);
-                                    responseMap.put("message", "Failed to update password");
-                                }
-                            }
-                        } else {
-                            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                            responseMap.put("success", false);
-                            responseMap.put("message", "User not found");
                         }
+                    }
+                }
+
+                // Hỗ trợ xác minh mật khẩu cho tài khoản legacy (plain-text)
+                if (!passwordVerified) {
+                    String legacySql = "SELECT id FROM users WHERE email = '" + email + "' AND password_hash = '" + currentPassword + "'";
+                    try (java.sql.Statement stmt = conn.createStatement();
+                         ResultSet rs = stmt.executeQuery(legacySql)) {
+                        if (rs.next()) {
+                            passwordVerified = true;
+                        }
+                    }
+                }
+
+                if (!passwordVerified) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    responseMap.put("success", false);
+                    responseMap.put("message", "Mật khẩu hiện tại không đúng");
+                    response.getWriter().write(gson.toJson(responseMap));
+                    return;
+                }
+
+                String hashedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+
+                String updateSql = "UPDATE users SET password_hash = ? WHERE email = ?";
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                    updateStmt.setString(1, hashedNewPassword);
+                    updateStmt.setString(2, email);
+
+                    int rowsUpdated = updateStmt.executeUpdate();
+                    if (rowsUpdated > 0) {
+                        responseMap.put("success", true);
+                        responseMap.put("message", "Password changed successfully");
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        responseMap.put("success", false);
+                        responseMap.put("message", "User not found");
                     }
                 }
             }
@@ -604,7 +645,7 @@ public class ProfileServlet extends HttpServlet {
             responseMap.put("success", false);
             responseMap.put("message", "Invalid request data");
         }
-        
+
         response.getWriter().write(gson.toJson(responseMap));
     }
 

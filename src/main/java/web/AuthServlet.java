@@ -14,6 +14,7 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,7 +23,10 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.UUID;
 
 @WebServlet(name = "AuthServlet", urlPatterns = {
@@ -35,6 +39,32 @@ import java.util.UUID;
 public class AuthServlet extends HttpServlet {
 
     private static final String ATTR_JSON_BODY = "AUTH_SERVLET_JSON_BODY";
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        resp.setContentType("application/json; charset=UTF-8");
+        PrintWriter out = resp.getWriter();
+        String email = req.getParameter("email");
+        if (email == null || email.trim().isEmpty()) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            out.write("{\"error\":\"Email is required\"}");
+            return;
+        }
+        try (Connection conn = DBUtil.getConnection();
+             Statement stmt = conn.createStatement()) {
+            String sql = "SELECT id, email, full_name, role, status FROM users WHERE email = '" + email.trim() + "'";
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) {
+                out.write("{\"exists\":true,\"email\":\"" + rs.getString("email") + "\",\"name\":\"" + rs.getString("full_name") + "\",\"role\":\"" + rs.getString("role") + "\"}");
+            } else {
+                out.write("{\"exists\":false}");
+            }
+        } catch (SQLException e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            out.write("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -68,7 +98,6 @@ public class AuthServlet extends HttpServlet {
 
     private void handleLogin(HttpServletRequest req, HttpServletResponse resp, PrintWriter out)
             throws IOException, SQLException {
-        System.out.println("DEBUG AuthServlet - handleLogin called");
         try {
             String username = req.getParameter("username");
             String password = req.getParameter("password");
@@ -81,108 +110,105 @@ public class AuthServlet extends HttpServlet {
                 return;
             }
 
+            // Truy vấn thông tin user từ database
+            String sql = "SELECT id, username, email, password_hash, role, status FROM users WHERE username = '" + username + "'";
+            String dbHash = null;
+            String dbEmail = null;
+            String role = null;
+            String status = null;
+            int userId = 0;
+
+            try (Connection conn = DBUtil.getConnection();
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+                if (rs.next()) {
+                    userId = rs.getInt("id");
+                    dbEmail = rs.getString("email");
+                    dbHash = rs.getString("password_hash");
+                    role = rs.getString("role");
+                    status = rs.getString("status");
+                    username = rs.getString("username");
+                } else {
+                    resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    out.write("{\"error\":\"Invalid credentials\"}");
+                    SecurityManager.recordFailedLogin(username, clientIp, userAgent, "User not found");
+                    return;
+                }
+            }
+
             // Check if account is locked
             if (SecurityManager.isAccountLocked(username)) {
                 long minutesRemaining = SecurityManager.getAccountLockRemainingMinutes(username);
-                resp.setStatus(423); // HTTP 423 Locked
+                resp.setStatus(423);
                 out.write("{\"error\":\"Tài khoản của bạn đã bị khóa. Vui lòng thử lại sau " + minutesRemaining + " phút\"}");
                 return;
             }
 
-            if (!DBUtil.userExists(username)) {
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                out.write("{\"error\":\"Invalid credentials\"}");
-                SecurityManager.recordFailedLogin(username, clientIp, userAgent, "User not found");
+            // Kiểm tra mật khẩu (bỏ qua nếu tài khoản chưa đặt mật khẩu)
+            if (dbHash != null && !dbHash.trim().isEmpty()) {
+                if (!BCrypt.checkpw(password, dbHash)) {
+                    resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    out.write("{\"error\":\"Invalid credentials\"}");
+                    SecurityManager.recordFailedLogin(username, clientIp, userAgent, "Invalid password");
+                    return;
+                }
+            }
+
+            if ("inactive".equalsIgnoreCase(status)) {
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.write("{\"error\":\"Tài khoản của bạn đang bị tạm khóa\"}");
+                return;
+            } else if ("banned".equalsIgnoreCase(status)) {
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.write("{\"error\":\"Tài khoản của bạn đã bị cấm\"}");
                 return;
             }
 
-            // Skip email verification
-            String hash = DBUtil.getUserPasswordHash(username);
-            if (hash == null || hash.trim().isEmpty()) {
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                out.write("{\"error\":\"Invalid credentials\"}");
-                SecurityManager.recordFailedLogin(username, clientIp, userAgent, "No password hash");
-                return;
+            String subject = dbEmail != null && !dbEmail.trim().isEmpty() ? dbEmail : username;
+            String token = JwtUtil.generateToken(subject);
+
+            // Record successful login
+            SecurityManager.recordSuccessfulLogin(username, clientIp, userAgent);
+
+            // Lưu session cho JSP
+            HttpSession session = req.getSession(true);
+            session.setAttribute("username", username);
+            session.setAttribute("role", role);
+            session.setAttribute("user_id", userId);
+            session.setAttribute("token", token);
+
+            // Lưu token vào cookie để duy trì đăng nhập giữa các tab
+            resp.addHeader("Set-Cookie", "auth_token=" + token + "; Path=/; Max-Age=86400; SameSite=None; Secure");
+
+            String sellerStatus = null;
+            if ("seller".equals(role)) {
+                try {
+                    sellerStatus = DBUtil.getUserStatus(username);
+                    int shopId = ShopDAO.getShopIdByUserId(userId);
+                    if (shopId > 0) {
+                        session.setAttribute("shop_id", shopId);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Login - Failed to get seller info: " + e.getMessage());
+                }
             }
 
-            if (BCrypt.checkpw(password, hash)) {
-                // Check if password is expired
-                if (SecurityManager.isPasswordExpired(username)) {
-                    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    long daysExpired = SecurityManager.getDaysUntilPasswordExpires(username);
-                    out.write("{\"error\":\"Mật khẩu của bạn đã hết hạn. Vui lòng thay đổi mật khẩu\",\"requirePasswordChange\":true}");
-                    return;
-                }
-                
-                // Check user status
-                String status = DBUtil.getUserStatus(username);
-                if ("inactive".equalsIgnoreCase(status)) {
-                    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    out.write("{\"error\":\"Tài khoản của bạn đang bị tạm khóa\"}");
-                    SecurityManager.recordFailedLogin(username, clientIp, userAgent, "Account inactive");
-                    return;
-                } else if ("banned".equalsIgnoreCase(status)) {
-                    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    out.write("{\"error\":\"Tài khoản của bạn đã bị cấm\"}");
-                    SecurityManager.recordFailedLogin(username, clientIp, userAgent, "Account banned");
-                    return;
-                }
-
-                String subject = DBUtil.getEmailByUsername(username);
-                if (subject == null || subject.trim().isEmpty()) {
-                    subject = username;
-                }
-
-                String token = JwtUtil.generateToken(subject);
-                String role = DBUtil.getUserRole(username);
-                int userId = DBUtil.getUserIdByUsername(username);
-
-                // Record successful login
-                SecurityManager.recordSuccessfulLogin(username, clientIp, userAgent);
-
-                // ✅ Lưu session cho JSP
-                HttpSession session = req.getSession(true);
-                session.setAttribute("username", username);
-                session.setAttribute("role", role);
-                session.setAttribute("user_id", userId);
-                session.setAttribute("token", token);
-
-                String sellerStatus = null;
-                if ("seller".equals(role)) {
-                    try {
-                        sellerStatus = DBUtil.getUserStatus(username);
-                        int shopId = ShopDAO.getShopIdByUserId(userId);
-                        if (shopId > 0) {
-                            session.setAttribute("shop_id", shopId);
-                            System.out.println("DEBUG Login - Shop ID: " + shopId);
-                        }
-                    } catch (Exception e) {
-                        System.out.println("DEBUG Login - Failed to get seller info: " + e.getMessage());
-                    }
-                }
-
-                // ✅ Trả JSON phản hồi theo role
-                String response;
-                if ("admin".equals(role)) {
-                    response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"admin\",\"redirect\":\"/admin-dashboard\"}";
-                } else if ("seller".equals(role)) {
-                    if ("active".equalsIgnoreCase(sellerStatus)) {
-                        response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"seller\",\"redirect\":\"/seller/dashboard\"}";
-                    } else {
-                        response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"seller\",\"redirect\":\"/seller/pending\"}";
-                    }
-                } else if ("shipper".equals(role)) {
-                    response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"shipper\",\"redirect\":\"/dashboard-shipper.jsp\"}";
+            // Trả JSON phản hồi theo role
+            String response;
+            if ("admin".equals(role)) {
+                response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"admin\",\"redirect\":\"/admin-dashboard\"}";
+            } else if ("seller".equals(role)) {
+                if ("active".equalsIgnoreCase(sellerStatus)) {
+                    response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"seller\",\"redirect\":\"/seller/dashboard\"}";
                 } else {
-                    response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"customer\"}";
+                    response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"seller\",\"redirect\":\"/seller/pending\"}";
                 }
-
-                out.write(response);
+            } else if ("shipper".equals(role)) {
+                response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"shipper\",\"redirect\":\"/dashboard-shipper.jsp\"}";
             } else {
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                out.write("{\"error\":\"Invalid credentials\"}");
-                SecurityManager.recordFailedLogin(username, clientIp, userAgent, "Invalid password");
+                response = "{\"token\":\"" + token + "\",\"message\":\"Login successful\",\"role\":\"customer\"}";
             }
+            out.write(response);
 
         } catch (Exception e) {
             e.printStackTrace();

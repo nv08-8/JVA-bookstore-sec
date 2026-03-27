@@ -43,7 +43,7 @@ public class JwtFilter implements Filter {
             return;
         }
 
-        // Fallback to JWT token
+        // Fallback to JWT token from Authorization header
         String authHeader = req.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ") && authHeader.length() > 7) {
             String token = authHeader.substring(7);
@@ -53,6 +53,20 @@ public class JwtFilter implements Filter {
                 return;
             }
         }
+
+        // Fallback to JWT token from cookie
+        if (req.getCookies() != null) {
+            for (javax.servlet.http.Cookie cookie : req.getCookies()) {
+                if ("auth_token".equals(cookie.getName())) {
+                    String user = JwtUtil.validateToken(cookie.getValue());
+                    if (user != null) {
+                        chain.doFilter(request, response);
+                        return;
+                    }
+                }
+            }
+        }
+
         resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         resp.setContentType("application/json");
         resp.getWriter().write("{\"error\":\"Unauthorized\"}");
@@ -68,8 +82,9 @@ public class JwtFilter implements Filter {
             return false;
         }
 
-        // Allow cart API for khách vãng lai (dựa vào session để nhận diện)
-        if (path.equals("/api/cart") || path.startsWith("/api/cart/")) {
+        // Allow cart API và local lab endpoints cho khách vãng lai.
+        if (path.equals("/api/cart") || path.startsWith("/api/cart/")
+                || path.startsWith("/api/account/preferences/")) {
             return true;
         }
 
@@ -90,6 +105,11 @@ public class JwtFilter implements Filter {
                 return true;
             default:
                 break;
+        }
+
+        // Allow book import endpoint
+        if (path.equals("/api/books/import") && "POST".equalsIgnoreCase(method)) {
+            return true;
         }
 
         // Allow anyone to browse catalog and category metadata.

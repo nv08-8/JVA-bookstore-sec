@@ -12,7 +12,13 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -64,6 +70,9 @@ public class BooksApiServlet extends HttpServlet {
                 case "/search":
                     handleSearch(req, resp);
                     break;
+                case "/search-result":
+                    handleSearchResult(req, resp);
+                    return;
                 case "/":
                 default:
                     handleCatalogList(req, resp);
@@ -279,5 +288,59 @@ public class BooksApiServlet extends HttpServlet {
         }
         String trimmed = input.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        String path = req.getPathInfo();
+        if (path == null) path = "/";
+
+        if ("/import".equals(path)) {
+            handleXmlImport(req, resp);
+        } else {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        }
+    }
+
+    private void handleXmlImport(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        resp.setContentType("application/json; charset=UTF-8");
+        PrintWriter writer = resp.getWriter();
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(req.getInputStream());
+
+            NodeList books = doc.getElementsByTagName("book");
+            int count = 0;
+
+            for (int i = 0; i < books.getLength(); i++) {
+                Element book = (Element) books.item(i);
+                String title = getTagValue(book, "title");
+                String author = getTagValue(book, "author");
+                String isbn = getTagValue(book, "isbn");
+                String price = getTagValue(book, "price");
+                String description = getTagValue(book, "description");
+
+                if (title != null && author != null) {
+                    count++;
+                }
+            }
+
+            writer.write("{\"success\":true,\"imported\":" + count + ",\"message\":\"Imported " + count + " books from XML\"}");
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            writer.write("{\"success\":false,\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    private String getTagValue(Element parent, String tagName) {
+        NodeList list = parent.getElementsByTagName(tagName);
+        if (list.getLength() > 0 && list.item(0).getTextContent() != null) {
+            return list.item(0).getTextContent().trim();
+        }
+        return null;
     }
 }
