@@ -119,15 +119,17 @@ public class BookDAO {
 
         String sql = "SELECT b.id, b.title, b.author, b.isbn, b.price, b.description, b.category, b.stock_quantity, b.image_url, " +
                 "b.created_at, b.updated_at, b.status, b.shop_id, b.shop_name, 0 AS total_sold, 0 AS average_rating, 0 AS rating_count, 0 AS favorite_count " +
-                "FROM books b WHERE 1=1 AND (b.title = '" + keyword.trim() + "' OR b.author = '" + keyword.trim() + "' OR b.isbn = '" + keyword.trim() + "')";
+                "FROM books b WHERE b.title = ? OR b.author = ? OR b.isbn = ?";
+
+        String normalizedKeyword = keyword.trim();
+        List<Object> params = Arrays.asList(normalizedKeyword, normalizedKeyword, normalizedKeyword);
 
         try (Connection connection = DBUtil.getConnection();
-             Statement statement = connection.createStatement()) {
-            try (ResultSet rs = statement.executeQuery(sql)) {
-                List<Book> books = new ArrayList<>();
-                while (rs.next()) books.add(mapRow(rs));
-                return books;
-            }
+             PreparedStatement statement = prepare(connection, sql, params);
+             ResultSet rs = statement.executeQuery()) {
+            List<Book> books = new ArrayList<>();
+            while (rs.next()) books.add(mapRow(rs));
+            return books;
         }
     }
 
@@ -136,18 +138,19 @@ public class BookDAO {
         if (limit <= 0) limit = 10;
         limit = Math.min(limit, 50);
 
-        String keyword_trimmed = keyword.trim();
+        String keywordTrimmed = escapeLikePattern(keyword.trim());
+        String pattern = "%" + keywordTrimmed + "%";
         String sql = BASE_SELECT +
-                " WHERE b.status = 'active' AND (b.title ILIKE '%" + keyword_trimmed + "%' OR b.author ILIKE '%" + keyword_trimmed + "%' OR b.isbn ILIKE '%" + keyword_trimmed + "%') " +
-                "ORDER BY rating_count DESC, total_sold DESC, b.title ASC LIMIT " + limit;
+                " WHERE b.status = 'active' AND (b.title ILIKE ? ESCAPE '\\' OR b.author ILIKE ? ESCAPE '\\' OR b.isbn ILIKE ? ESCAPE '\\') " +
+                "ORDER BY rating_count DESC, total_sold DESC, b.title ASC LIMIT ?";
+        List<Object> params = Arrays.asList(pattern, pattern, pattern, limit);
 
         try (Connection connection = DBUtil.getConnection();
-             Statement statement = connection.createStatement()) {
-            try (ResultSet rs = statement.executeQuery(sql)) {
-                List<Book> books = new ArrayList<>();
-                while (rs.next()) books.add(mapRow(rs));
-                return books;
-            }
+             PreparedStatement statement = prepare(connection, sql, params);
+             ResultSet rs = statement.executeQuery()) {
+            List<Book> books = new ArrayList<>();
+            while (rs.next()) books.add(mapRow(rs));
+            return books;
         }
     }
 

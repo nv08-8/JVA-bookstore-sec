@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -157,14 +158,15 @@ public class BooksApiServlet extends HttpServlet {
 
     private void handleSearchResult(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String keyword = trimToNull(req.getParameter("q"));
+        String safeKeyword = escapeHtml(keyword == null ? "" : keyword);
         resp.setContentType("text/html; charset=UTF-8");
 
         PrintWriter writer = resp.getWriter();
         writer.println("<html>");
         writer.println("<head><title>Search Result</title></head>");
         writer.println("<body>");
-        writer.println("<h2>Kết quả tìm kiếm cho: " + keyword + "</h2>");
-        writer.println("<p>Bạn đã tìm kiếm: <strong>" + keyword + "</strong></p>");
+        writer.println("<h2>Kết quả tìm kiếm cho: " + safeKeyword + "</h2>");
+        writer.println("<p>Bạn đã tìm kiếm: <strong>" + safeKeyword + "</strong></p>");
         writer.println("</body>");
         writer.println("</html>");
     }
@@ -255,7 +257,7 @@ public class BooksApiServlet extends HttpServlet {
         resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         JsonObject obj = new JsonObject();
         obj.addProperty("error", "SERVER_ERROR");
-        obj.addProperty("message", ex.getMessage());
+        obj.addProperty("message", "Đã xảy ra lỗi máy chủ");
         writeJson(resp, obj);
     }
 
@@ -309,7 +311,7 @@ public class BooksApiServlet extends HttpServlet {
         PrintWriter writer = resp.getWriter();
 
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory factory = createSecureDocumentBuilderFactory();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(req.getInputStream());
 
@@ -332,8 +334,30 @@ public class BooksApiServlet extends HttpServlet {
             writer.write("{\"success\":true,\"imported\":" + count + ",\"message\":\"Imported " + count + " books from XML\"}");
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            writer.write("{\"success\":false,\"error\":\"" + e.getMessage() + "\"}");
+            writer.write("{\"success\":false,\"error\":\"Invalid XML payload\"}");
         }
+    }
+
+    private DocumentBuilderFactory createSecureDocumentBuilderFactory() throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        return factory;
+    }
+
+    private String escapeHtml(String value) {
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private String getTagValue(Element parent, String tagName) {

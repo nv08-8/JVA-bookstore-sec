@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -52,9 +53,10 @@ public class AuthServlet extends HttpServlet {
             return;
         }
         try (Connection conn = DBUtil.getConnection();
-             Statement stmt = conn.createStatement()) {
-            String sql = "SELECT id, email, full_name, role, status FROM users WHERE email = '" + email.trim() + "'";
-            ResultSet rs = stmt.executeQuery(sql);
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT id, email, full_name, role, status FROM users WHERE email = ?")) {
+            stmt.setString(1, email.trim());
+            ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 out.write("{\"exists\":true,\"email\":\"" + rs.getString("email") + "\",\"name\":\"" + rs.getString("full_name") + "\",\"role\":\"" + rs.getString("role") + "\"}");
             } else {
@@ -62,7 +64,7 @@ public class AuthServlet extends HttpServlet {
             }
         } catch (SQLException e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"" + e.getMessage() + "\"}");
+            out.write("{\"error\":\"Internal server error\"}");
         }
     }
 
@@ -90,7 +92,7 @@ public class AuthServlet extends HttpServlet {
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"" + e.getMessage() + "\"}");
+            out.write("{\"error\":\"Internal server error\"}");
         } finally {
             out.flush();
         }
@@ -213,7 +215,7 @@ public class AuthServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"Login error: " + e.getMessage() + "\"}");
+            out.write("{\"error\":\"Login failed\"}");
         }
     }
 

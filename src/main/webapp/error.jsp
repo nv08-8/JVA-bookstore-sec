@@ -12,14 +12,8 @@
 <body>
   <div class="container my-5">
     <h3 class="text-danger">Application Error</h3>
-    <p>Message: <%= exception != null ? exception.getMessage() : request.getAttribute("javax.servlet.error.message") %></p>
-    <pre>
-    <%
-      if (exception != null) {
-          exception.printStackTrace(new java.io.PrintWriter(out));
-      }
-    %>
-    </pre>
+    <p>Đã xảy ra lỗi trong quá trình xử lý yêu cầu.</p>
+    <p>Vui lòng thử lại sau hoặc liên hệ quản trị viên nếu lỗi vẫn tiếp diễn.</p>
   </div>
 </body>
 </html>

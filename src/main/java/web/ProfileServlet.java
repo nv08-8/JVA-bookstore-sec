@@ -380,8 +380,25 @@ public class ProfileServlet extends HttpServlet {
         Map<String, Object> responseMap = new HashMap<>();
         
         try {
+            String requesterEmail = AuthUtil.getUserEmail(request);
+            if (requesterEmail == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                responseMap.put("success", false);
+                responseMap.put("message", "Not authenticated");
+                response.getWriter().write(gson.toJson(responseMap));
+                return;
+            }
+
             try (Connection conn = DBUtil.getConnection()) {
-                String sql = "SELECT id, email, full_name, phone, birth_date, address, role, status, password_hash, created_at FROM users ORDER BY id";
+                if (!isAdminUser(conn, requesterEmail)) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    responseMap.put("success", false);
+                    responseMap.put("message", "Forbidden");
+                    response.getWriter().write(gson.toJson(responseMap));
+                    return;
+                }
+
+                String sql = "SELECT id, email, full_name, phone, birth_date, address, role, status, created_at FROM users ORDER BY id";
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     try (ResultSet rs = stmt.executeQuery()) {
                         List<Map<String, Object>> users = new ArrayList<>();
@@ -395,7 +412,6 @@ public class ProfileServlet extends HttpServlet {
                             user.put("address", rs.getString("address"));
                             user.put("role", rs.getString("role"));
                             user.put("status", rs.getString("status"));
-                            user.put("passwordHash", rs.getString("password_hash"));
                             user.put("createdAt", rs.getTimestamp("created_at"));
                             users.add(user);
                         }
@@ -414,6 +430,16 @@ public class ProfileServlet extends HttpServlet {
         }
         
         response.getWriter().write(gson.toJson(responseMap));
+    }
+
+    private boolean isAdminUser(Connection conn, String email) throws SQLException {
+        String sql = "SELECT role FROM users WHERE email = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, email);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() && "admin".equalsIgnoreCase(rs.getString("role"));
+            }
+        }
     }
 
     private void updateUserProfile(HttpServletRequest request, HttpServletResponse response) 
