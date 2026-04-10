@@ -315,6 +315,17 @@ public class ProfileServlet extends HttpServlet {
         Map<String, Object> responseMap = new HashMap<>();
         
         try {
+            // IDOR Fix #5: Kiểm tra quyền truy cập
+            Long currentUserId = resolveUserId(request);
+            String currentUserEmail = AuthUtil.getUserEmail(request);
+            if (currentUserId == null || currentUserEmail == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                responseMap.put("success", false);
+                responseMap.put("message", "Not authenticated");
+                response.getWriter().write(gson.toJson(responseMap));
+                return;
+            }
+            
             String userIdParam = request.getParameter("userId");
             if (userIdParam == null || userIdParam.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -336,6 +347,15 @@ public class ProfileServlet extends HttpServlet {
             }
 
             try (Connection conn = DBUtil.getConnection()) {
+                // IDOR Fix #5: User chỉ được xem profile của chính mình hoặc là admin
+                if (currentUserId != userId && !isAdminUser(conn, currentUserEmail)) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    responseMap.put("success", false);
+                    responseMap.put("message", "You do not have permission to view this user profile");
+                    response.getWriter().write(gson.toJson(responseMap));
+                    return;
+                }
+                
                 ensureUserProfileColumns(conn);
                 String sql = "SELECT id, email, full_name, phone, birth_date, address, role, status, created_at FROM users WHERE id = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -974,6 +994,24 @@ public class ProfileServlet extends HttpServlet {
         }
 
         int shopId = shopIdRaw.intValue();
+        
+        // IDOR Fix #8: Kiểm tra quyền truy cập shop coupon
+        try (Connection conn = DBUtil.getConnection()) {
+            String userEmail = AuthUtil.getUserEmail(request);
+            boolean isAdmin = isAdminUser(conn, userEmail);
+            
+            // Nếu không phải admin, kiểm tra user có phải owner của shop này không
+            if (!isAdmin) {
+                Shop userShop = ShopDAO.getShopByUserId(userId.intValue());
+                if (userShop == null || userShop.getId() != shopId) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    responseMap.put("success", false);
+                    responseMap.put("message", "You do not have permission to view coupons of this shop");
+                    response.getWriter().write(gson.toJson(responseMap));
+                    return;
+                }
+            }
+        }
         List<ShopCoupon> coupons = ShopCouponDAO.listActiveForShop(shopId);
         List<Map<String, Object>> result = new ArrayList<>();
         for (ShopCoupon coupon : coupons) {
