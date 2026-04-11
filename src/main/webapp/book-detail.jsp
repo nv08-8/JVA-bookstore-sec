@@ -262,7 +262,7 @@
                       </span>
                     </div>
                     <p class="text-gray-700 leading-relaxed whitespace-pre-line break-words">
-                      ${r.comment}
+                      <c:out value='${r.comment}'/>
                     </p>
                     <c:if test="${not empty r.mediaUrl}">
                       <div class="mt-3">

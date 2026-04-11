@@ -4,6 +4,11 @@
 <%
   String ctx = request.getContextPath();
   String sid = request.getParameter("id")==null?"":request.getParameter("id");
+  // XSS Protection
+  String sidEscaped = sid.replace("\\", "\\\\").replace("'", "\\'")
+                          .replace("\"", "\\\"")
+                          .replace("\n", "\\n")
+                          .replace("\r", "\\r");
 
   String pPage   = request.getParameter("page");   if (pPage==null || pPage.isEmpty())   pPage = "1";
   String pSize   = request.getParameter("size");   if (pSize==null || pSize.isEmpty())   pSize = "10";
@@ -23,7 +28,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Chi tiết vận đơn #<%=sid%></title>
+  <title>Chi tiết vận đơn #<%=sidEscaped%></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/feather-icons"></script>
@@ -33,7 +38,7 @@
 <div class="container mx-auto px-4 py-8">
 
   <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-semibold">Vận đơn #<span id="ship-id"><%=sid%></span></h1>
+    <h1 class="text-2xl font-semibold">Vận đơn #<span id="ship-id"><%=sidEscaped%></span></h1>
     <div class="flex items-center gap-2">
       <a href="<%=backHref%>" class="inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">
         « Quay lại danh sách
@@ -169,7 +174,7 @@
 
 <script>
   const ctx = '<%=ctx%>';
-  const id = '<%=sid%>';
+  const id = '<%=sidEscaped%>';
 
   function guardRole(){
     const role = localStorage.getItem('auth_role')||'';
