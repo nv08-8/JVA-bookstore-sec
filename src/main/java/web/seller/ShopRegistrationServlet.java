@@ -37,6 +37,22 @@ public class ShopRegistrationServlet extends HttpServlet {
         try {
             System.out.println("DEBUG ShopRegistrationServlet - doPost called");
 
+            // CSRF token validation
+            String authHeader = req.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                HttpSession csrfSession = req.getSession(false);
+                String sessionToken = (csrfSession != null)
+                        ? (String) csrfSession.getAttribute("_csrf_token") : null;
+                String requestToken = req.getParameter("_csrf");
+                if (requestToken == null || requestToken.isEmpty())
+                    requestToken = req.getHeader("X-CSRF-Token");
+                if (sessionToken == null || !sessionToken.equals(requestToken)) {
+                    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    out.write(gson.toJson(Map.of("success", false, "message", "CSRF token khong hop le")));
+                    return;
+                }
+            }
+
             // Try session first, then JWT token
             Integer userId = (Integer) req.getSession().getAttribute("user_id");
             System.out.println("DEBUG ShopRegistrationServlet - userId from session: " + userId);

@@ -185,7 +185,7 @@
             </button>
         </form> -->
 
-        <form id="shopRegisterForm" method="POST" action="<%= request.getContextPath() %>/api/seller/register-shop">
+    <form id="shopRegisterForm" method="POST" action="<%= request.getContextPath() %>/api/seller/register-shop">
     <%-- CSRF token: server so khớp giá trị này với token trong session để chống CSRF --%>
     <input type="hidden" name="_csrf" value="<%= session.getAttribute("_csrf_token") %>">
     <div class="form-group">
