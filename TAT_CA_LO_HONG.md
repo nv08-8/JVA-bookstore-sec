@@ -435,22 +435,3 @@ Cookie: JSESSIONID=<cookie-user>
 
 Kết quả mong đợi:
 - Response trả lỗi chi tiết nội bộ (thông tin DB/exception/message kỹ thuật).
-----
-
-## 6) Ưu tiên xử lý (ngắn gọn)
-
-P1 (sửa ngay):
-- SQLi login + SQLi change password legacy.
-- Secret mặc định cho toàn bộ admin API.
-- Thiếu RBAC ở admin endpoints.
-- Stored XSS ở review.
-
-P2:
-- Bổ sung CSP/HSTS/X-Frame-Options/X-Content-Type-Options.
-- Chuẩn hoá cookie flags (`HttpOnly`, `Secure`, `SameSite` phù hợp).
-- Loại bỏ mixed content HTTP.
-
-P3:
-- Thêm SRI cho tài nguyên CDN hoặc self-host static assets.
-- Hardening cache-control cho response nhạy cảm.
-- Bổ sung audit log + alert cho hành vi admin quan trọng.
