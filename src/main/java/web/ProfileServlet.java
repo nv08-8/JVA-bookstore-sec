@@ -25,6 +25,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.sql.Connection;
@@ -109,6 +110,22 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("application/json; charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
+
+        // CSRF validation cho mọi POST từ HTML form (không phải JWT Bearer API)
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            HttpSession csrfSession = request.getSession(false);
+            String sessionToken = (csrfSession != null) ? (String) csrfSession.getAttribute("_csrf_token") : null;
+            String requestToken = request.getParameter("_csrf");
+            if (requestToken == null || requestToken.isEmpty()) {
+                requestToken = request.getHeader("X-CSRF-Token");
+            }
+            if (sessionToken == null || !sessionToken.equals(requestToken)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write("{\"error\":\"CSRF token không hợp lệ hoặc bị thiếu\"}");
+                return;
+            }
+        }
 
         List<String> segments = getPathSegments(request.getPathInfo());
         if (segments.isEmpty()) {

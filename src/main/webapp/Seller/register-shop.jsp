@@ -1,5 +1,14 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.security.SecureRandom, java.util.Base64" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%
+    // Sinh CSRF token nếu session chưa có
+    if (session.getAttribute("_csrf_token") == null) {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        session.setAttribute("_csrf_token", Base64.getUrlEncoder().withoutPadding().encodeToString(bytes));
+    }
+%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -177,6 +186,8 @@
         </form> -->
 
         <form id="shopRegisterForm" method="POST" action="<%= request.getContextPath() %>/api/seller/register-shop">
+    <%-- CSRF token: server so khớp giá trị này với token trong session để chống CSRF --%>
+    <input type="hidden" name="_csrf" value="<%= session.getAttribute("_csrf_token") %>">
     <div class="form-group">
         <label for="shopName">Tên Shop <span style="color: red;">*</span></label>
         <input type="text" id="shopName" name="name" required 

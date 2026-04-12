@@ -138,13 +138,6 @@ public class AuthServlet extends HttpServlet {
                 }
             }
 
-            // Check if account is locked
-            if (SecurityManager.isAccountLocked(username)) {
-                long minutesRemaining = SecurityManager.getAccountLockRemainingMinutes(username);
-                resp.setStatus(423);
-                out.write("{\"error\":\"Tài khoản của bạn đã bị khóa. Vui lòng thử lại sau " + minutesRemaining + " phút\"}");
-                return;
-            }
 
             // Kiểm tra mật khẩu (bỏ qua nếu tài khoản chưa đặt mật khẩu)
             if (dbHash != null && !dbHash.trim().isEmpty()) {
@@ -180,7 +173,7 @@ public class AuthServlet extends HttpServlet {
             session.setAttribute("token", token);
 
             // Lưu token vào cookie để duy trì đăng nhập giữa các tab
-            resp.addHeader("Set-Cookie", "auth_token=" + token + "; Path=/; Max-Age=86400; SameSite=None; Secure");
+            resp.addHeader("Set-Cookie", "auth_token=" + token + "; Path=/; Max-Age=86400; SameSite=Strict; Secure; HttpOnly");
 
             String sellerStatus = null;
             if ("seller".equals(role)) {

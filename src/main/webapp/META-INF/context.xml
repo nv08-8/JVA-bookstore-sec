@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+    <!--
+        Cấu hình Tomcat tự động thêm SameSite=Strict vào cookie JSESSIONID.
+        Mục đích: ngăn trình duyệt gửi session cookie kèm cross-site request → chống CSRF.
+    -->
+    <CookieProcessor sameSiteCookies="strict" />
+</Context>

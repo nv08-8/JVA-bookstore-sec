@@ -28,6 +28,12 @@
     <session-config>
         <cookie-config>
             <secure>true</secure>
+            <http-only>true</http-only>
+            <!-- SameSite=Strict: trình duyệt không gửi JSESSIONID kèm cross-site request → chống CSRF -->
+            <attribute>
+                <name>SameSite</name>
+                <value>Strict</value>
+            </attribute>
         </cookie-config>
     </session-config>
 
