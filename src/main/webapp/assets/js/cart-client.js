@@ -204,7 +204,11 @@
                 })
                 .catch(function (error) {
                     console.error(error);
-                    showToast('Không thể thêm sản phẩm. Vui lòng thử lại.', true);
+                    var message = 'Không thể thêm sản phẩm. Vui lòng thử lại.';
+                    if (error && error.payload && error.payload.message) {
+                        message = error.payload.message;
+                    }
+                    showToast(message, true);
                 })
                 .finally(function () {
                     button.disabled = false;

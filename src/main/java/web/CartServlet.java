@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dao.CartDAO;
 import models.Cart;
+import models.CartItem;
 import utils.AuthUtil;
 import utils.DBUtil;
 import utils.GsonHelper;
@@ -125,21 +126,40 @@ public class CartServlet extends HttpServlet {
     }
 
     private void addCartItem(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Map<String, Object> requestData = readJson(request);
-        Object bookIdRaw = requestData.get("bookId");
-        Object quantityRaw = requestData.get("quantity");
-        Long bookId = parseObjectId(bookIdRaw);
-        int quantity = parseQuantity(quantityRaw, 1);
-        if (bookId == null || quantity <= 0) {
-            sendBadRequest(response, "Invalid payload");
-            return;
-        }
         try {
+            Map<String, Object> requestData = readJson(request);
+            Object bookIdRaw = requestData.get("bookId");
+            Object quantityRaw = requestData.get("quantity");
+            Long bookId = parseObjectId(bookIdRaw);
+            int quantity = parseQuantity(quantityRaw, 1);
+            System.out.println("[ADD CART] bookId=" + bookId + ", quantity=" + quantity);
+            if (bookId == null || quantity <= 0) {
+                sendBadRequest(response, "Invalid payload");
+                return;
+            }
             if (!isAvailable(bookId, quantity)) {
+                System.out.println("[ADD CART] Stock check failed at initial check");
                 sendBadRequest(response, "Sách đã hết hàng hoặc không đủ số lượng");
                 return;
             }
             Cart cart = loadCart(request);
+            System.out.println("[ADD CART] Cart loaded: " + cart.getItems().size() + " items");
+            // Check if item already in cart - if so, validate total quantity
+            int currentQuantityInCart = 0;
+            for (CartItem item : cart.getItems()) {
+                if (item.getBookId() == bookId) {
+                    currentQuantityInCart = item.getQuantity();
+                    System.out.println("[ADD CART] Item already in cart with quantity: " + currentQuantityInCart);
+                    break;
+                }
+            }
+            int totalQuantity = currentQuantityInCart + quantity;
+            System.out.println("[ADD CART] Total would be: " + totalQuantity);
+            if (!isAvailable(bookId, totalQuantity)) {
+                System.out.println("[ADD CART] Stock check failed at total check");
+                sendBadRequest(response, "Sách đã hết hàng hoặc không đủ số lượng");
+                return;
+            }
             CartDAO.addOrIncrementItem(cart.getId(), bookId, quantity);
             Cart updated = CartDAO.loadCart(cart.getId());
             Map<String, Object> payload = new HashMap<>();
@@ -148,7 +168,18 @@ public class CartServlet extends HttpServlet {
             payload.put("summary", buildSummary(updated));
             response.getWriter().write(gson.toJson(payload));
         } catch (SQLException ex) {
-            handleServerError(response, ex);
+            String message = ex.getMessage();
+            System.out.println("[ADD CART ERROR] SQL Exception: " + message);
+            ex.printStackTrace();
+            if (message != null && (message.contains("tồn kho") || message.contains("stock"))) {
+                sendBadRequest(response, message);
+            } else {
+                sendBadRequest(response, "Sách đã hết hàng hoặc không đủ số lượng");
+            }
+        } catch (Exception ex) {
+            System.out.println("[ADD CART ERROR] Generic Exception: " + ex.getMessage());
+            ex.printStackTrace();
+            sendBadRequest(response, "Sách đã hết hàng hoặc không đủ số lượng");
         }
     }
 
@@ -246,8 +277,7 @@ public class CartServlet extends HttpServlet {
                         if (rs.wasNull()) {
                             return true;
                         }
-                        // Một số nguồn dữ liệu để trống hoặc đặt 0. Cho phép đặt khi <= 0 để không chặn trải nghiệm.
-                        return stock <= 0 || stock >= quantity;
+                        return stock > 0 && stock >= quantity;
                     }
                 }
             }
@@ -308,7 +338,7 @@ public class CartServlet extends HttpServlet {
         if (digitMatcher.find()) {
             try {
                 int numeric = Integer.parseInt(digitMatcher.group(1));
-                return numeric <= 0 || numeric >= desiredQuantity;
+                return numeric > 0 && numeric >= desiredQuantity;
             } catch (NumberFormatException ignored) {
                 // Ignore parsing issue and continue with text-based heuristics.
             }
