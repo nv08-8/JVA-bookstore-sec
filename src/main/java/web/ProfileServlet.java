@@ -664,9 +664,11 @@ public class ProfileServlet extends HttpServlet {
 
                 // Hỗ trợ xác minh mật khẩu cho tài khoản legacy (plain-text)
                 if (!passwordVerified) {
-                    String legacySql = "SELECT id FROM users WHERE email = '" + email + "' AND password_hash = '" + currentPassword + "'";
-                    try (java.sql.Statement stmt = conn.createStatement();
-                         ResultSet rs = stmt.executeQuery(legacySql)) {
+                    String legacySql = "SELECT id FROM users WHERE email = ? AND password_hash = ?";
+                    try (PreparedStatement legacyStmt = conn.prepareStatement(legacySql)) {
+                        legacyStmt.setString(1, email);
+                        legacyStmt.setString(2, currentPassword);
+                        ResultSet rs = legacyStmt.executeQuery();
                         if (rs.next()) {
                             passwordVerified = true;
                         }

@@ -113,7 +113,7 @@ public class AuthServlet extends HttpServlet {
             }
 
             // Truy vấn thông tin user từ database
-            String sql = "SELECT id, username, email, password_hash, role, status FROM users WHERE username = '" + username + "'";
+            String sql = "SELECT id, username, email, password_hash, role, status FROM users WHERE username = ?";
             String dbHash = null;
             String dbEmail = null;
             String role = null;
@@ -121,8 +121,9 @@ public class AuthServlet extends HttpServlet {
             int userId = 0;
 
             try (Connection conn = DBUtil.getConnection();
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, username);
+                ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
                     userId = rs.getInt("id");
                     dbEmail = rs.getString("email");
