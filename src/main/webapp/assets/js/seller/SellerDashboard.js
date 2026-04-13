@@ -6,7 +6,7 @@
 const BASE_URL = window.contextPath || ''; // contextPath được nhúng từ JSP
 const API_BASE = `${BASE_URL}/api/seller`;
 const SHOP_ID = window.shopId || (localStorage.getItem('shop_id') || 0);
-const TOKEN = localStorage.getItem('seller_token') || localStorage.getItem('auth_token');
+// ✅ Security Fix: Token is in HttpOnly cookie, not localStorage
 
 // Định dạng tiền tệ
 const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
@@ -16,13 +16,9 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', cu
 // =========================================================================
 
 function getAuthHeaders() {
-    if (!TOKEN) {
-        // Nếu token không có, chuyển hướng về đăng xuất để xóa session
-        window.location.href = `${BASE_URL}/logout-clear.jsp`;
-        return {};
-    }
-    return {
-        'Authorization': `Bearer ${TOKEN}`,
+    // ✅ Security Fix: Token sent via HttpOnly cookie automatically
+    // API calls should use credentials: 'include'
+    return {};
         'Content-Type': 'application/json'
     };
 }

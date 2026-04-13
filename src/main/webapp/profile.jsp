@@ -534,14 +534,7 @@
         };
 
         // Check authentication on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
-                // Redirect to login if not authenticated
-                alert('Vui lòng đăng nhập để truy cập trang này.');
-                window.location.href = `${contextPath}/login.jsp`;
-                return;
-            }
+        document.addEventListener('DOMContentLoaded', function() {\n            // ✅ Security Fix: Check auth_role instead of auth_token\n            const role = localStorage.getItem('auth_role');\n            if (!role) {\n                // Redirect to login if not authenticated\n                alert('Vui lòng đăng nhập để truy cập trang này.');\n                window.location.href = `${contextPath}/login.jsp`;\n                return;\n            }
             
             const modalEl = document.getElementById('orderDetailModal');
             if (modalEl) {
@@ -603,11 +596,9 @@
         });
 
         function loadUserProfile() {
-            const token = localStorage.getItem('auth_token');
+            // ✅ Security Fix: Token sent via HttpOnly cookie (credentials: 'include')
             fetch(`${contextPath}/api/profile`, {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
@@ -635,12 +626,12 @@
             const formData = new FormData(document.getElementById('profileForm'));
             const profileData = Object.fromEntries(formData);
 
-            const token = localStorage.getItem('auth_token');
+            // ✅ Security Fix: Token sent via HttpOnly cookie
             fetch(`${contextPath}/api/profile`, {
                 method: 'PUT',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(profileData)
             })
@@ -670,12 +661,12 @@
             const formData = new FormData(document.getElementById('changePasswordForm'));
             const passwordData = Object.fromEntries(formData);
 
-            const token = localStorage.getItem('auth_token');
+            // ✅ Security Fix: Token sent via HttpOnly cookie
             fetch(`${contextPath}/api/profile/password`, {
                 method: 'PUT',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(passwordData)
             })
@@ -830,10 +821,10 @@
                 return;
             }
             container.innerHTML = '<div class="text-center py-4 text-muted">Đang tải danh sách yêu thích...</div>';
-            const token = localStorage.getItem('auth_token');
+            // ✅ Security Fix: Token sent via HttpOnly cookie
             try {
                 const response = await fetch(`${contextPath}/api/profile/favorites`, {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    credentials: 'include'
                 });
                 const data = await response.json();
                 if (!response.ok || !data.success) {
@@ -891,10 +882,10 @@
                 return;
             }
             container.innerHTML = '<div class="text-center py-4 text-muted">Đang tải sản phẩm đã xem...</div>';
-            const token = localStorage.getItem('auth_token');
+            // ✅ Security Fix: Token sent via HttpOnly cookie
             try {
                 const response = await fetch(`${contextPath}/api/profile/recent-views?limit=12`, {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    credentials: 'include'
                 });
                 const data = await response.json();
                 if (!response.ok || !data.success) {
@@ -958,10 +949,10 @@
                 return;
             }
             container.innerHTML = '<div class="text-center py-4 text-muted">Đang tải mã giảm giá...</div>';
-            const token = localStorage.getItem('auth_token');
+            // ✅ Security Fix: Token sent via HttpOnly cookie
             try {
                 const response = await fetch(`${contextPath}/api/profile/coupons`, {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    credentials: 'include'
                 });
                 const data = await response.json();
                 if (!response.ok || !data.success) {
@@ -1111,8 +1102,8 @@
             addressState.loading = true;
             renderAddressList();
 
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
+            // ✅ Security Fix: Token sent via HttpOnly cookie
+            if (!localStorage.getItem('auth_role')) {
                 addressState.error = 'Bạn cần đăng nhập để xem địa chỉ.';
                 addressState.loading = false;
                 renderAddressList();
@@ -1121,9 +1112,7 @@
 
             try {
                 const response = await fetch(`${contextPath}/api/profile/addresses`, {
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
+                    credentials: 'include'
                 });
                 if (response.status === 401) {
                     addressState.loading = false;
@@ -1337,8 +1326,8 @@
                 return;
             }
 
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
+            // ✅ Security Fix: Token sent via HttpOnly cookie
+            if (!localStorage.getItem('auth_role')) {
                 showFormError('Bạn cần đăng nhập để lưu địa chỉ.');
                 return;
             }
@@ -1354,9 +1343,9 @@
             try {
                 const response = await fetch(url, {
                     method,
+                    credentials: 'include',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
@@ -1399,8 +1388,8 @@
                 return;
             }
 
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
+            // ✅ Security Fix: Token sent via HttpOnly cookie
+            if (!localStorage.getItem('auth_role')) {
                 showAlert('Bạn cần đăng nhập để xóa địa chỉ.', 'danger');
                 return;
             }
@@ -1408,8 +1397,7 @@
             try {
                 const response = await fetch(`${contextPath}/api/profile/addresses/${addressId}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
+                    credentials: 'include'
                     }
                 });
                 const data = await response.json().catch(() => ({}));
@@ -1431,8 +1419,8 @@
         }
 
         async function setDefaultAddress(addressId) {
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
+            // ✅ Security Fix: Token sent via HttpOnly cookie
+            if (!localStorage.getItem('auth_role')) {
                 showAlert('Bạn cần đăng nhập để thao tác.', 'danger');
                 return;
             }
@@ -1440,8 +1428,7 @@
             try {
                 const response = await fetch(`${contextPath}/api/profile/addresses/${addressId}/default`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
+                    credentials: 'include'
                     }
                 });
                 const data = await response.json().catch(() => ({}));
@@ -1594,7 +1581,7 @@
             if (!orderId) {
                 return;
             }
-            const token = localStorage.getItem('auth_token');
+            // ✅ Security Fix: Token sent via HttpOnly cookie
             const container = document.getElementById('orderDetailContent');
             if (container) {
                 container.innerHTML = '<div class="text-center py-4 text-muted">Đang tải thông tin đơn hàng...</div>';
@@ -1605,10 +1592,10 @@
             try {
                 const [orderResponse, timelineResponse] = await Promise.all([
                     fetch(`${contextPath}/api/profile/orders/${orderId}`, {
-                        headers: { 'Authorization': 'Bearer ' + token }
+                        credentials: 'include'
                     }),
                     fetch(`${contextPath}/api/profile/orders/${orderId}/timeline`, {
-                        headers: { 'Authorization': 'Bearer ' + token }
+                        credentials: 'include'
                     })
                 ]);
                 const orderPayload = await orderResponse.json();
@@ -1632,12 +1619,11 @@
             if (!orderId) {
                 return;
             }
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
+            // ✅ Security Fix: Token sent via HttpOnly cookie
+            if (!localStorage.getItem('auth_role')) {
                 showAlert('Bạn cần đăng nhập để hủy đơn hàng.', 'warning');
                 return;
-            }
-            const confirmMessage = orderCode ? `Bạn có chắc chắn muốn hủy đơn ${orderCode}?` : 'Bạn có chắc chắn muốn hủy đơn hàng này?';
+            }\n            const confirmMessage = orderCode ? `Bạn có chắc chắn muốn hủy đơn ${orderCode}?` : 'Bạn có chắc chắn muốn hủy đơn hàng này?';
             if (!confirm(confirmMessage)) {
                 return;
             }
@@ -1656,9 +1642,9 @@
             try {
                 const response = await fetch(`${contextPath}/api/profile/orders/${orderId}/cancel`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ reason: reason || null })
                 });
@@ -1955,8 +1941,8 @@
                 alertEl.classList.add('d-none');
             }
 
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
+            // ✅ Security Fix: Token sent via HttpOnly cookie
+            if (!localStorage.getItem('auth_role')) {
                 if (alertEl) {
                     alertEl.textContent = 'Bạn cần đăng nhập để bình luận sản phẩm.';
                     alertEl.classList.remove('d-none');
@@ -1967,7 +1953,7 @@
             setReviewFormLoading(true);
             try {
                 const response = await fetch(`${contextPath}/api/reviews/me?bookId=${reviewState.bookId}`, {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    credentials: 'include'
                 });
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -2037,8 +2023,8 @@
                 return;
             }
 
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
+            // ✅ Security Fix: Token sent via HttpOnly cookie
+            if (!localStorage.getItem('auth_role')) {
                 showReviewError('Bạn cần đăng nhập để bình luận sản phẩm.');
                 return;
             }
@@ -2063,9 +2049,7 @@
             try {
                 const response = await fetch(`${contextPath}/api/reviews`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    },
+                    credentials: 'include'
                     body: formData
                 });
                 const payload = await response.json().catch(() => ({ success: false }));
@@ -2224,12 +2208,12 @@
             const formData = new FormData(document.getElementById('deleteAccountForm'));
             const deleteData = Object.fromEntries(formData);
 
-            const token = localStorage.getItem('auth_token');
+            // ✅ Security Fix: Token sent via HttpOnly cookie
             fetch(`${contextPath}/api/profile/delete`, {
                 method: 'DELETE',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(deleteData)
             })

@@ -88,10 +88,8 @@
   guardRole();
 
   async function authFetch(url,opt={}){
-    const token = localStorage.getItem('auth_token')||'';
     const headers = new Headers(opt.headers||{});
-    if (token) headers.set('Authorization','Bearer '+token);
-    const res = await fetch(url,{...opt, headers});
+    const res = await fetch(url,{...opt, headers, credentials: 'include'});
     if (res.status === 401) {
       localStorage.removeItem('auth_token');
       location.href = ctx + '/login.jsp';

@@ -124,8 +124,6 @@
   const ctx = '<%=ctx%>';
 
   // Auth guard
-  const token = localStorage.getItem('auth_token');
-  if (!token) window.location.replace(ctx + '/login.jsp');
   function guardRole(){
     const role = (localStorage.getItem('auth_role') || '').toLowerCase();
     if (role !== 'shipper') window.location.replace(ctx + '/login.jsp');
@@ -206,15 +204,14 @@
     return `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cls}">${label}</span>`;
   }
 
-  // Shipper info (tạm từ localStorage/JWT)
+  // Shipper info (tạm từ localStorage)
   function renderShipperInfo(stats){
     const nameLS  = localStorage.getItem('auth_user') || '';
     const emailLS = localStorage.getItem('auth_email') || '';
-    const payload = parseJwt(localStorage.getItem('auth_token') || '');
 
-    const username = (payload.sub || payload.username || nameLS || emailLS || 'shipper').toString();
-    const email    = emailLS || payload.email || '';
-    const display  = nameLS || payload.full_name || username;
+    const username = (nameLS || emailLS || 'shipper').toString();
+    const email    = emailLS || '';
+    const display  = nameLS || username;
 
     const init = (display || username || 'S').trim().charAt(0).toUpperCase();
     document.getElementById('shipperAvatar').textContent = init;

@@ -587,22 +587,22 @@
         // Initialize Feather Icons
         feather.replace();
 
-        // Kiểm tra token khi load trang
+        // Kiểm tra authentication khi load trang
         window.addEventListener('load', function() {
-            const sellerToken = localStorage.getItem('seller_token');
-            const authToken = localStorage.getItem('auth_token');
-            const token = sellerToken || authToken;
+            // ✅ Security Fix: Check auth_role instead of auth_token (token in HttpOnly cookie)
+            const role = localStorage.getItem('auth_role');
+            const seller = localStorage.getItem('auth_username');
 
-            console.log('Seller token:', sellerToken ? 'exists' : 'not found');
-            console.log('Auth token:', authToken ? 'exists' : 'not found');
+            console.log('Auth role:', role || 'not found');
+            console.log('Username:', seller ? 'exists' : 'not found');
 
-            if (!token) {
-                console.log('No token found, redirecting to login');
+            if (!role) {
+                console.log('Not authenticated, redirecting to login');
                 window.location.href = '${pageContext.request.contextPath}/login.jsp';
                 return;
             }
 
-            console.log('Token found, page loaded successfully');
+            console.log('Authenticated, page loaded successfully');
         });
 
     </script>

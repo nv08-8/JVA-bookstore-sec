@@ -44,8 +44,9 @@
     }
 
     function guardAuth() {
-        var token = window.localStorage.getItem('auth_token');
-        if (!token || !token.trim()) {
+        // ✅ Security Fix: Check auth_role instead of auth_token
+        var role = window.localStorage.getItem('auth_role');
+        if (!role || !role.trim()) {
             redirectToLogin();
             return false;
         }

@@ -146,9 +146,10 @@
             return;
         }
 
-        const token = window.localStorage.getItem('auth_token');
-        const username = getStoredUsername(token);
-        if (token) {
+        // ✅ Security Fix: Check auth_role instead of auth_token
+        const role = window.localStorage.getItem('auth_role');
+        const username = window.localStorage.getItem('auth_username') || '';
+        if (role) {
             renderUserDropdown(dropdown, username);
         } else {
             renderGuestDropdown(dropdown);
@@ -174,10 +175,9 @@
     }
 
     function handleLogout(dropdown) {
-        window.localStorage.removeItem('auth_token');
+        // ✅ Security Fix: auth_token is in HttpOnly cookie (auto-cleared by browser)
         window.localStorage.removeItem('auth_username');
-        // Also remove admin tokens if they exist
-        window.localStorage.removeItem('admin_token');
+        // Also remove admin data if it exists
         window.localStorage.removeItem('admin_username');
         renderGuestDropdown(dropdown);
         dropdown.classList.add('hidden');

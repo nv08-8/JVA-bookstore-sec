@@ -53,9 +53,8 @@
 
   // 🔹 Nếu người dùng đã đăng nhập, tự động chuyển hướng
   (function () {
-    const token = localStorage.getItem('auth_token');
-    const role  = (localStorage.getItem('auth_role') || '').toLowerCase();
-    if (token && role) {
+    const role = (localStorage.getItem('auth_role') || '').toLowerCase();
+    if (role) {
       let target = contextPath + '/';
       if (role === 'seller') target = contextPath + '/profile.jsp';
       else if (role === 'admin') target = contextPath + '/admin-dashboard';
@@ -110,13 +109,13 @@
           const username = (formData.get('username') || '').trim();
           const role = (data.role || '').toLowerCase();
 
-          localStorage.setItem('auth_token', data.token);
+          // ✅ Security Fix: Token is now in HttpOnly cookie (set by backend)
+          // Only store non-sensitive display data in localStorage
           localStorage.setItem('auth_role', role);
           localStorage.setItem('auth_username', username);
 
-          // 🔹 Nếu là admin, lưu thêm admin_token
+          // 🔹 Nếu là admin, lưu thêm admin_username
           if (role === 'admin') {
-            localStorage.setItem('admin_token', data.token);
             localStorage.setItem('admin_username', username);
           }
 
