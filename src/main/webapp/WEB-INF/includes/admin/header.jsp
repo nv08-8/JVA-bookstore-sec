@@ -8,7 +8,7 @@
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/feather-icons"></script>
-    <script>
+    <script nonce="${csp_nonce}">
         window.appConfig = window.appConfig || {};
         window.appConfig.contextPath = '<%=request.getContextPath()%>';
     </script>

@@ -1,9 +1,12 @@
 package filters;
 
 import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Collection;
 
 /**
@@ -11,6 +14,7 @@ import java.util.Collection;
  * Đồng thời:
  *  - Thêm security headers chống Clickjacking vào mọi response.
  *  - Tự động gắn SameSite=Strict; HttpOnly vào cookie JSESSIONID (chống CSRF).
+ *  - Generate nonce cho CSP (Content Security Policy) bảo vệ inline scripts.
  */
 public class EncodingFilter implements Filter {
 
@@ -61,11 +65,32 @@ public class EncodingFilter implements Filter {
         }
         response.setCharacterEncoding(UTF8);
         if (response instanceof HttpServletResponse) {
-            HttpServletResponse httpResp = new SameSiteWrapper((HttpServletResponse) response);
+            HttpServletResponseWrapper httpResp = new SameSiteWrapper((HttpServletResponse) response);
+
+            // Generate nonce cho CSP
+            String nonce = generateNonce();
+            if (request instanceof HttpServletRequest) {
+                ((HttpServletRequest) request).setAttribute("csp_nonce", nonce);
+            }
+
+            // CSP Policy với nonce cho script-src và safe style-src
+            String csp = "default-src 'self'; " +
+                    "script-src 'self' 'nonce-" + nonce + "' https://code.jquery.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://unpkg.com; " +
+                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
+                    "img-src 'self' data: https://static.photos https://salt.tikicdn.com https://github.com; " +
+                    "font-src 'self' data: https://fonts.gstatic.com; " +
+                    "connect-src 'self' https://localhost https://unpkg.com; " +
+                    "frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+
+            httpResp.setHeader("Content-Security-Policy", csp);
 
             // Chống Clickjacking: cấm nhúng trang vào iframe từ bất kỳ origin nào
             httpResp.setHeader("X-Frame-Options", "DENY");
-            httpResp.setHeader("Content-Security-Policy", "frame-ancestors 'none'");
+
+            // Các security headers khác
+            httpResp.setHeader("X-Content-Type-Options", "nosniff");
+            httpResp.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+            httpResp.setHeader("X-XSS-Protection", "1; mode=block");
 
             String contentType = httpResp.getContentType();
             if (contentType != null && contentType.startsWith("text/")) {
@@ -76,6 +101,24 @@ public class EncodingFilter implements Filter {
             return;
         }
         chain.doFilter(request, response);
+    }
+
+    /**
+     * Generate random nonce (32 bytes) encoded as Base64 cho CSP
+     */
+    private String generateNonce() {
+        try {
+            SecureRandom random = SecureRandom.getInstanceStrong();
+            byte[] nonceBytes = new byte[32];
+            random.nextBytes(nonceBytes);
+            return Base64.getEncoder().encodeToString(nonceBytes);
+        } catch (Exception e) {
+            // Fallback nếu không thể tạo SecureRandom
+            SecureRandom random = new SecureRandom();
+            byte[] nonceBytes = new byte[32];
+            random.nextBytes(nonceBytes);
+            return Base64.getEncoder().encodeToString(nonceBytes);
+        }
     }
 
     @Override

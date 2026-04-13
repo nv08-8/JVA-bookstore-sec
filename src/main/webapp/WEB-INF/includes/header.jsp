@@ -170,7 +170,7 @@
             </div>
         </div>
     </div>
-    <script>
+    <script nonce="${csp_nonce}">
         document.addEventListener('DOMContentLoaded', function () {
             var menuBtn = document.getElementById('mobileMenuButton');
             var mobileMenu = document.getElementById('mobileMenu');

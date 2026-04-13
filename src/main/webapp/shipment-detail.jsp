@@ -170,9 +170,9 @@
 
 </div>
 
-<script>feather.replace();</script>
+<script nonce="${csp_nonce}">feather.replace();</script>
 
-<script>
+<script nonce="${csp_nonce}">
   const ctx = '<%=ctx%>';
   const id = '<%=sidEscaped%>';
 

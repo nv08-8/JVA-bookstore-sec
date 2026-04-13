@@ -212,7 +212,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="${csp_nonce}">
     window.appConfig = window.appConfig || {};
     window.appConfig.contextPath = '<%=footerCtx%>';
 </script>

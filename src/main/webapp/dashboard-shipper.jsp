@@ -118,9 +118,9 @@
 </div>
 
 <%@ include file="/WEB-INF/includes/footer.jsp" %>
-<script>feather.replace();</script>
+<script nonce="${csp_nonce}">feather.replace();</script>
 
-<script>
+<script nonce="${csp_nonce}">
   const ctx = '<%=ctx%>';
 
   // Auth guard

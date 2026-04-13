@@ -456,7 +456,7 @@
     <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script nonce="${csp_nonce}">
         const contextPath = '<%= request.getContextPath() %>';
         let currentUser = null;
         const addressState = {
