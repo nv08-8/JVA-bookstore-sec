@@ -10,7 +10,7 @@
   <title>Danh sách vận đơn</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Đồng bộ vibe trang chủ, không dùng header.jsp -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="<%= request.getContextPath() %>/assets/js/tailwindcss-cdn.js"></script>
   <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen">

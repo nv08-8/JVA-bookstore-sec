@@ -977,7 +977,14 @@ public class ProfileServlet extends HttpServlet {
         if (userId == null) {
             return;
         }
-        int limit = parsePositiveInt(request.getParameter("limit"), 20, 100);
+        Integer limit = parseLimitParam(request.getParameter("limit"), 20, 100);
+        if (limit == null) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            responseMap.put("success", false);
+            responseMap.put("message", "Tham số limit không hợp lệ. Chỉ chấp nhận số nguyên dương.");
+            response.getWriter().write(gson.toJson(responseMap));
+            return;
+        }
         List<RecentViewDAO.RecentViewRecord> recentViews = RecentViewDAO.findRecentViews(userId, limit);
         responseMap.put("success", true);
         responseMap.put("data", recentViews);
@@ -1273,6 +1280,25 @@ public class ProfileServlet extends HttpServlet {
             return Math.min(value, max);
         } catch (NumberFormatException ex) {
             return defaultValue;
+        }
+    }
+
+    private Integer parseLimitParam(String raw, int defaultValue, int max) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return defaultValue;
+        }
+        String normalized = raw.trim();
+        if (!normalized.matches("^[0-9]+$")) {
+            return null;
+        }
+        try {
+            int value = Integer.parseInt(normalized);
+            if (value <= 0) {
+                return null;
+            }
+            return Math.min(value, max);
+        } catch (NumberFormatException ex) {
+            return null;
         }
     }
 

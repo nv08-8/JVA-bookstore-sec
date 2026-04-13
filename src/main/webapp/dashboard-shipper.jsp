@@ -10,9 +10,9 @@
   <title>Shipper Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="<%= request.getContextPath() %>/assets/js/tailwindcss-cdn.js"></script>
   <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen">
 <div class="container mx-auto px-4 py-8">

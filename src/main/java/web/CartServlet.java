@@ -38,6 +38,12 @@ public class CartServlet extends HttpServlet {
         response.setContentType("application/json; charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
 
+        List<String> segments = getPathSegments(request.getPathInfo());
+        if (!segments.isEmpty()) {
+            sendNotFound(response);
+            return;
+        }
+
         try {
             // Kiểm tra status user trước khi cho phép truy cập giỏ hàng
             if (!isUserAllowedToShop(request)) {

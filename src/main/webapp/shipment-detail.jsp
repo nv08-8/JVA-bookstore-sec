@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page isELIgnored="true" %>
 <%@ page import="java.net.URLEncoder" %>
 <%
@@ -30,7 +30,7 @@
   <meta charset="UTF-8">
   <title>Chi tiết vận đơn #<%=sidEscaped%></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="<%= request.getContextPath() %>/assets/js/tailwindcss-cdn.js"></script>
   <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
@@ -423,9 +423,3 @@
 </body>
 
 </html>
-
-
-
-
-
-
