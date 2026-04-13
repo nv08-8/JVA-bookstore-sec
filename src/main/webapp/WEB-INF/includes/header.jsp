@@ -10,10 +10,8 @@
         <title><c:out value="${empty pageTitle ? 'Bookish Bliss Haven' : pageTitle}" /></title>
         <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://unpkg.com/feather-icons"></script>
+        <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap&subset=vietnamese');
-
             body {
                 font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             }
