@@ -71,7 +71,7 @@
             <div><i class="fas fa-phone-volume me-1"></i> 1900 9999 · <i class="fas fa-envelope me-1"></i> hello@gocxep.vn</div>
         </div>
     </footer>
-    <script nonce="${csp_nonce}">
+    <script>
         document.getElementById('year').textContent = new Date().getFullYear();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

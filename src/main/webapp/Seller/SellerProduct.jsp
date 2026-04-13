@@ -424,7 +424,7 @@
 </div>
 
 <%-- CHÚ Ý: Sử dụng JS mới là SellerProduct.js, không phải AdProduct.js --%>
-<script nonce="${csp_nonce}">
+<script>
     window.appConfig = window.appConfig || {};
     window.appConfig.contextPath = '${pageContext.request.contextPath}';
     window.appConfig.shopId = '<c:out value="${shopId}" />';
@@ -432,7 +432,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/js/seller/SellerProduct.js"></script>
-<script nonce="${csp_nonce}">
+<script>
     feather.replace(); // Khởi tạo icons nếu cần
 </script>
 </body>

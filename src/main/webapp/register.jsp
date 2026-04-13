@@ -51,7 +51,7 @@
 </main>
 
 <%@ include file="/WEB-INF/includes/footer.jsp" %>
-<script nonce="${csp_nonce}">
+<script>
 const baseUrl = '<%= request.getContextPath() %>';
 let currentEmail = '';
 

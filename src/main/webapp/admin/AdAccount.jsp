@@ -18,7 +18,7 @@
     <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap&subset=vietnamese" rel="stylesheet">
-    <script nonce="${csp_nonce}">
+    <script>
         window.appConfig = window.appConfig || {};
         window.appConfig.contextPath = '${pageContext.request.contextPath}';
     </script>

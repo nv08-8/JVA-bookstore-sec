@@ -76,9 +76,9 @@
 </div>
 
 <%@ include file="/WEB-INF/includes/footer.jsp" %>
-<script nonce="${csp_nonce}">feather.replace();</script>
+<script>feather.replace();</script>
 
-<script nonce="${csp_nonce}">
+<script>
   const ctx = '<%=ctx%>';
 
   function guardRole(){

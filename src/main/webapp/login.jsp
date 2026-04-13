@@ -48,7 +48,7 @@
 </main>
 
 <%@ include file="/WEB-INF/includes/footer.jsp" %>
-<script nonce="${csp_nonce}">
+<script>
   const contextPath = '<%= request.getContextPath() %>';
 
   // 🔹 Nếu người dùng đã đăng nhập, tự động chuyển hướng

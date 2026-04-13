@@ -83,7 +83,7 @@
 </main>
 
 <%@ include file="/WEB-INF/includes/footer.jsp" %>
-<script nonce="${csp_nonce}">
+<script>
   const contextPath = '<%= request.getContextPath() %>';
 
   (function () {
