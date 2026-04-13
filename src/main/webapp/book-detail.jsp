@@ -404,9 +404,8 @@
         }
 
         function ensureLoggedIn() {
-          // ✅ Security Fix: Check for auth_role instead of auth_token (non-sensitive display data)
-          var role = window.localStorage.getItem('auth_role');
-          if (!role) {
+          var token = window.localStorage.getItem('auth_token');
+          if (!token) {
             var contextPath = (window.appShell ? window.appShell.contextPath : '');
             window.location.href = contextPath + '/login.jsp';
             return false;
@@ -443,9 +442,8 @@
         }
 
         function loadInitialState() {
-          // ✅ Security Fix: Check auth_role instead of auth_token (non-sensitive display data)
-          var role = window.localStorage.getItem('auth_role');
-          if (!role) {
+          var token = window.localStorage.getItem('auth_token');
+          if (!token) {
             renderButton();
             return;
           }
@@ -482,9 +480,8 @@
         if (!apiClient || Number.isNaN(bookId) || bookId <= 0) {
           return;
         }
-        // ✅ Security Fix: Check auth_role instead of auth_token
-        var role = window.localStorage.getItem('auth_role');
-        if (!role) {
+        var token = window.localStorage.getItem('auth_token');
+        if (!token) {
           return;
         }
         apiClient.post('/profile/recent-views', { bookId: bookId })

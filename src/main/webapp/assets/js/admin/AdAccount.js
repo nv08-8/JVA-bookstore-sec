@@ -25,17 +25,24 @@ const roleLabels = {
 };
 
 function getAdminToken() {
-    // ✅ Security Fix: Token is in HttpOnly cookie, not localStorage
-    // This function kept for backward compatibility but returns null
-    // API calls use credentials: 'include' to send the cookie automatically
+    const rawAdminToken = localStorage.getItem('admin_token');
+    if (rawAdminToken && rawAdminToken.trim().length > 0) {
+        return rawAdminToken.trim();
+    }
+    const rawAuthToken = localStorage.getItem('auth_token');
+    if (rawAuthToken && rawAuthToken.trim().length > 0) {
+        return rawAuthToken.trim();
+    }
     return null;
 }
 
 function buildAuthHeaders(base = {}) {
-    // ✅ Security Fix: Token sent via HttpOnly cookie automatically
-    // This function kept for backward compatibility
-    // Just return the base headers without adding Authorization
-    return { ...base };
+    const headers = { ...base };
+    const token = getAdminToken();
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+    return headers;
 }
 
 function formatDateTime(value) {

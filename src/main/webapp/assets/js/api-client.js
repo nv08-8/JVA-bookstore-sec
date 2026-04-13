@@ -12,8 +12,10 @@
         var opts = options ? Object.assign({}, options) : {};
         opts.method = method;
         opts.headers = new Headers(opts.headers || {});
-        // ✅ Security Fix: Token is sent via HttpOnly cookie (credentials: 'include' below)
-        // Do NOT retrieve token from localStorage - it's vulnerable to XSS attacks
+        var token = window.localStorage.getItem('auth_token');
+        if (token && !opts.headers.has('Authorization')) {
+            opts.headers.set('Authorization', 'Bearer ' + token);
+        }
         var hasBody = payload !== undefined && payload !== null;
         if (hasBody && !(payload instanceof FormData) && !opts.headers.has('Content-Type')) {
             opts.headers.set('Content-Type', 'application/json; charset=UTF-8');

@@ -87,8 +87,14 @@
         }
 
         function resolveSellerToken() {
-            // ✅ Security Fix: Token is in HttpOnly cookie, not localStorage
-            // API calls use credentials: 'include' to send the cookie
+            var primary = localStorage.getItem('seller_token');
+            if (primary && primary.trim().length > 0 && primary !== 'null') {
+                return primary.trim();
+            }
+            var fallback = localStorage.getItem('auth_token');
+            if (fallback && fallback.trim().length > 0 && fallback !== 'null') {
+                return fallback.trim();
+            }
             return null;
         }
 
