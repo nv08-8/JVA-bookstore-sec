@@ -99,7 +99,6 @@ public class JwtFilter implements Filter {
             case "/api/auth/reset":
             case "/api/auth/verify":
             case "/api/auth/register-quick":
-            case "/api/admin/clear-users":
             case "/api/test-email":
             case "/api/health":
                 return true;
@@ -135,9 +134,6 @@ public class JwtFilter implements Filter {
             if (path.equals("/api/comments") || (path.startsWith("/api/comments/") && !path.matches("/api/comments/.*\\d+"))) {
                 return true;
             }
-            if (path.equals("/api/admin/categories") || path.equals("/api/admin/dashboard") || path.equals("/api/admin/promotions")) {
-                return true;
-            }
         }
 
         return false;
@@ -146,9 +142,6 @@ public class JwtFilter implements Filter {
     private boolean allowsAdminSecretBypass(String path, HttpServletRequest request) {
         if (path == null || !path.startsWith("/api/admin/orders")) {
             return false;
-        }
-        if (isLocalhost(request)) {
-            return true;
         }
         String expected = getAdminSecret();
         if (expected == null) {
@@ -162,11 +155,6 @@ public class JwtFilter implements Filter {
         return expected.equals(headerSecret);
     }
 
-    private boolean isLocalhost(HttpServletRequest request) {
-        String remote = request.getRemoteAddr();
-        return "127.0.0.1".equals(remote) || "0:0:0:0:0:0:0:1".equals(remote) || "::1".equals(remote);
-    }
-
     private String getAdminSecret() {
         String env = System.getenv("ADMIN_PANEL_SECRET");
         if (env != null) {
@@ -175,7 +163,8 @@ public class JwtFilter implements Filter {
                 return env;
             }
         }
-        return "dev-secret-key-change-me";
+        // NO DEFAULT SECRET - MUST BE SET IN ENVIRONMENT VARIABLE
+        return null;
     }
 
     private String trimToNull(String value) {

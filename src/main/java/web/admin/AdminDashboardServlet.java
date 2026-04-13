@@ -29,6 +29,26 @@ public class AdminDashboardServlet extends HttpServlet {
         PrintWriter out = resp.getWriter();
         JsonObject response = new JsonObject();
 
+        // Check if user is authenticated
+        Object userId = req.getSession(false) != null ? req.getSession(false).getAttribute("user_id") : null;
+        if (userId == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.addProperty("error", "Unauthorized - Please login first");
+            out.write(response.toString());
+            out.flush();
+            return;
+        }
+
+        // Check if user is admin
+        Object userRole = req.getSession(false).getAttribute("role");
+        if (!"admin".equals(userRole)) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.addProperty("error", "Forbidden - Admin access required");
+            out.write(response.toString());
+            out.flush();
+            return;
+        }
+
         try {
             // Get stats
             JsonObject stats = getDashboardStats();

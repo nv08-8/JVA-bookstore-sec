@@ -193,10 +193,14 @@ public class AdminSupportChatServlet extends HttpServlet {
     }
 
     private boolean isAuthorized(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        if (isLocalhost(req)) {
-            return true;
-        }
         String expected = getAdminSecret();
+        if (expected == null) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Only admin can access this endpoint");
+            resp.getWriter().write(gson.toJson(error));
+            return false;
+        }
         String paramSecret = trimToNull(req.getParameter("secret"));
         String headerSecret = trimToNull(req.getHeader("X-Admin-Secret"));
         if (expected.equals(paramSecret) || expected.equals(headerSecret)) {
@@ -204,16 +208,9 @@ public class AdminSupportChatServlet extends HttpServlet {
         }
         resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
         Map<String, Object> error = new HashMap<>();
-        error.put("ok", false);
-        error.put("error", "FORBIDDEN");
-        error.put("message", "Forbidden");
+        error.put("error", "Forbidden - Invalid or missing admin secret");
         resp.getWriter().write(gson.toJson(error));
         return false;
-    }
-
-    private boolean isLocalhost(HttpServletRequest req) {
-        String remote = req.getRemoteAddr();
-        return "127.0.0.1".equals(remote) || "0:0:0:0:0:0:0:1".equals(remote) || "::1".equals(remote);
     }
 
     private String getAdminSecret() {
@@ -224,7 +221,8 @@ public class AdminSupportChatServlet extends HttpServlet {
                 return env;
             }
         }
-        return "dev-secret-key-change-me";
+        // NO DEFAULT SECRET - MUST BE SET IN ENVIRONMENT VARIABLE
+        return null;
     }
 
     private JsonObject readJsonBody(HttpServletRequest req) throws IOException {
