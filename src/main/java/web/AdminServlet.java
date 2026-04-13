@@ -17,14 +17,14 @@ public class AdminServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
         
-        // Simple security check: only allow from localhost or with a secret param
         String secret = req.getParameter("secret");
-        boolean isLocalhost = req.getRemoteAddr().equals("127.0.0.1") || req.getRemoteAddr().equals("::1");
+        String expectedSecret = System.getenv("ADMIN_PANEL_SECRET");
+        String configuredSecret = expectedSecret != null && !expectedSecret.trim().isEmpty() ? expectedSecret.trim() : null;
         
-        if (!isLocalhost && !"dev-secret-key-change-me".equals(secret)) {
+        if (configuredSecret == null || !configuredSecret.equals(secret)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
             try (PrintWriter out = resp.getWriter()) {
-                out.write("{\"error\":\"Forbidden\"}");
+                out.write("{\"error\":\"Forbidden - Invalid or missing admin secret\"}");
             }
             return;
         }

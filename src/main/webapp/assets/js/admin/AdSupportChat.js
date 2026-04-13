@@ -10,7 +10,8 @@
         if (fromQuery && fromQuery.trim().length > 0) {
             return fromQuery.trim();
         }
-        return 'dev-secret-key-change-me';
+        // NO DEFAULT SECRET - MUST BE PROVIDED IN QUERY PARAMETER
+        return null;
     })();
 
     var els = {

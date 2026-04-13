@@ -51,6 +51,24 @@ public class AdminCategoriesServlet extends HttpServlet {
 
         PrintWriter out = resp.getWriter();
 
+        // Check if user is authenticated
+        Object userId = req.getSession(false) != null ? req.getSession(false).getAttribute("user_id") : null;
+        if (userId == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            out.write("{\"error\":\"Unauthorized - Please login first\"}");
+            out.flush();
+            return;
+        }
+
+        // Check if user is admin
+        Object userRole = req.getSession(false).getAttribute("role");
+        if (!"admin".equals(userRole)) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            out.write("{\"error\":\"Forbidden - Admin access required\"}");
+            out.flush();
+            return;
+        }
+
         String action = req.getParameter("action");
 
         try {
