@@ -31,7 +31,7 @@
   <title>Chi tiết vận đơn #<%=sidEscaped%></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 <main class="flex-grow">

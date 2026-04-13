@@ -7,13 +7,12 @@
     <title>Bookish Bliss Haven - Admin Panel</title>
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
     <script nonce="${csp_nonce}">
         window.appConfig = window.appConfig || {};
         window.appConfig.contextPath = '<%=request.getContextPath()%>';
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap&subset=vietnamese');
         body { font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
         .hero-bg { background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://static.photos/books/1200x630/42'); background-size: cover; background-position: center; }
         .book-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
