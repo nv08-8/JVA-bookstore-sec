@@ -458,7 +458,7 @@
     </div>
 
     <!-- Messages -->
-    <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
+    <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1070;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script nonce="<%= cspNonce %>">
@@ -1645,60 +1645,80 @@
             }
         }
 
-        async function requestCancelOrder(orderId, orderCode, triggerButton) {
-            if (!orderId) {
-                return;
-            }
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
-                showAlert('Bạn cần đăng nhập để hủy đơn hàng.', 'warning');
-                return;
-            }
-            const confirmMessage = orderCode ? `Bạn có chắc chắn muốn hủy đơn ${orderCode}?` : 'Bạn có chắc chắn muốn hủy đơn hàng này?';
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-            let reason = prompt('Nhập lý do hủy đơn (có thể bỏ trống):');
-            if (reason) {
-                reason = reason.trim();
-                if (reason.length > 255) {
-                    reason = reason.substring(0, 255);
-                }
-            }
-            if (triggerButton) {
-                triggerButton.disabled = true;
-                triggerButton.dataset.originalHtml = triggerButton.innerHTML;
-                triggerButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang hủy...';
-            }
-            try {
-                const response = await fetch(`${contextPath}/api/profile/orders/${orderId}/cancel`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: JSON.stringify({ reason: reason || null })
-                });
-                const payload = await response.json().catch(() => ({ success: false }));
-                if (!response.ok || !payload.success) {
-                    const message = payload && payload.message ? payload.message : 'Không thể hủy đơn hàng. Vui lòng thử lại.';
-                    showAlert(message, 'danger');
+        function showCancelConfirm(orderId, orderCode, triggerButton) {
+            const container = document.getElementById('orderDetailContent');
+            if (!container) return;
+            // Xóa confirm cũ nếu có
+            const old = container.querySelector('#cancelConfirmBox');
+            if (old) old.remove();
+
+            const label = orderCode ? `đơn <strong>${escapeHtml(orderCode)}</strong>` : 'đơn hàng này';
+            const box = document.createElement('div');
+            box.id = 'cancelConfirmBox';
+            box.className = 'alert alert-warning mt-3';
+            box.innerHTML = `
+                <p class="mb-2">Bạn có chắc muốn hủy ${label}?</p>
+                <textarea id="cancelReasonInput" class="form-control form-control-sm mb-2" rows="2" placeholder="Lý do hủy (không bắt buộc)" maxlength="255"></textarea>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger btn-sm" id="confirmCancelBtn">Xác nhận hủy</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="abortCancelBtn">Giữ đơn</button>
+                </div>
+                <div id="cancelFeedback" class="mt-2"></div>
+            `;
+            container.appendChild(box);
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            document.getElementById('abortCancelBtn').onclick = () => box.remove();
+
+            document.getElementById('confirmCancelBtn').onclick = async () => {
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    document.getElementById('cancelFeedback').innerHTML =
+                        '<span class="text-danger">Bạn cần đăng nhập lại để thực hiện thao tác này.</span>';
                     return;
                 }
-                showAlert(payload.message || 'Đã hủy đơn hàng.', 'success');
-                loadOrderHistory();
-                viewOrderDetails(orderId);
-            } catch (error) {
-                console.error('requestCancelOrder error', error);
-                showAlert('Không thể hủy đơn hàng. Vui lòng thử lại sau.', 'danger');
-            } finally {
-                if (triggerButton) {
-                    const original = triggerButton.dataset.originalHtml;
-                    triggerButton.innerHTML = original || '<i class="fas fa-times me-1"></i>Hủy đơn';
-                    triggerButton.disabled = false;
-                    delete triggerButton.dataset.originalHtml;
+                let reason = (document.getElementById('cancelReasonInput').value || '').trim();
+                if (reason.length > 255) reason = reason.substring(0, 255);
+
+                const confirmBtn = document.getElementById('confirmCancelBtn');
+                const abortBtn  = document.getElementById('abortCancelBtn');
+                confirmBtn.disabled = true;
+                abortBtn.disabled   = true;
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang hủy...';
+
+                try {
+                    const response = await fetch(`${contextPath}/api/profile/orders/${orderId}/cancel`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ reason: reason || null })
+                    });
+                    const payload = await response.json().catch(() => ({ success: false }));
+                    if (!response.ok || !payload.success) {
+                        const msg = (payload && payload.message) ? payload.message : 'Không thể hủy đơn hàng.';
+                        document.getElementById('cancelFeedback').innerHTML =
+                            `<span class="text-danger">${escapeHtml(msg)}</span>`;
+                        confirmBtn.disabled = false;
+                        abortBtn.disabled   = false;
+                        confirmBtn.innerHTML = 'Xác nhận hủy';
+                        return;
+                    }
+                    box.remove();
+                    showAlert(payload.message || 'Đã hủy đơn hàng thành công.', 'success');
+                    loadOrderHistory();
+                    viewOrderDetails(orderId);
+                } catch (err) {
+                    console.error('cancelOrder fetch error', err);
+                    document.getElementById('cancelFeedback').innerHTML =
+                        '<span class="text-danger">Lỗi kết nối, vui lòng thử lại sau.</span>';
+                    confirmBtn.disabled = false;
+                    abortBtn.disabled   = false;
+                    confirmBtn.innerHTML = 'Xác nhận hủy';
                 }
-            }
+            };
         }
 
         function clearReviewError() {
@@ -2217,7 +2237,7 @@
             if (isCancellable) {
                 const cancelBtn = container.querySelector('[data-order-cancel]');
                 if (cancelBtn) {
-                    cancelBtn.addEventListener('click', () => requestCancelOrder(order.id, orderCode, cancelBtn));
+                    cancelBtn.addEventListener('click', () => showCancelConfirm(order.id, orderCode, cancelBtn));
                 }
             }
 
