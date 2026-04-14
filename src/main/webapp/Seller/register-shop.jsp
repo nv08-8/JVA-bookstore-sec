@@ -190,14 +190,16 @@
     <input type="hidden" name="_csrf" value="<%= session.getAttribute("_csrf_token") %>">
     <div class="form-group">
         <label for="shopName">Tên Shop <span style="color: red;">*</span></label>
-        <input type="text" id="shopName" name="name" required 
-               placeholder="Nhập tên shop của bạn">
+        <input type="text" id="shopName" name="name" required
+               placeholder="Nhập tên shop của bạn"
+               value='<%= request.getParameter("name") != null ? request.getParameter("name") : "" %>'>
     </div>
 
     <div class="form-group">
         <label for="shopAddress">Địa chỉ Shop</label>
         <input type="text" id="shopAddress" name="address" 
-               placeholder="Nhập địa chỉ shop (tùy chọn)">
+               placeholder="Nhập địa chỉ shop (tùy chọn)"
+               value='<%= request.getParameter("address") != null ? request.getParameter("address") : "" %>'>
     </div>
 
     <div class="form-group">
