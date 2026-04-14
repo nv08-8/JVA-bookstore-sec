@@ -179,20 +179,22 @@
         <form id="shopRegisterForm" method="POST" action="<%= request.getContextPath() %>/api/seller/register-shop">
     <div class="form-group">
         <label for="shopName">Tên Shop <span style="color: red;">*</span></label>
-        <input type="text" id="shopName" name="name" required 
-               placeholder="Nhập tên shop của bạn">
+        <input type="text" id="shopName" name="name" required
+               placeholder="Nhập tên shop của bạn"
+               value="<%= request.getParameter("name") != null ? request.getParameter("name") : "" %>">
     </div>
 
     <div class="form-group">
         <label for="shopAddress">Địa chỉ Shop</label>
-        <input type="text" id="shopAddress" name="address" 
-               placeholder="Nhập địa chỉ shop (tùy chọn)">
+        <input type="text" id="shopAddress" name="address"
+               placeholder="Nhập địa chỉ shop (tùy chọn)"
+               value="<%= request.getParameter("address") != null ? request.getParameter("address") : "" %>">
     </div>
 
     <div class="form-group">
         <label for="shopDescription">Mô tả Shop</label>
-        <textarea id="shopDescription" name="description" 
-                  placeholder="Giới thiệu về shop của bạn (tùy chọn)"></textarea>
+        <textarea id="shopDescription" name="description"
+                  placeholder="Giới thiệu về shop của bạn (tùy chọn)"><%= request.getParameter("description") != null ? request.getParameter("description") : "" %></textarea>
     </div>
 
     <button type="submit" class="btn-submit" id="submitBtn">
