@@ -42,7 +42,7 @@ public class AdminPromotionsServlet extends HttpServlet {
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+            out.write("{\"error\":\"" + "Đã xảy ra lỗi, vui lòng thử lại sau." + "\"}");
         } finally {
             out.flush();
         }
@@ -69,7 +69,7 @@ public class AdminPromotionsServlet extends HttpServlet {
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+            out.write("{\"error\":\"" + "Đã xảy ra lỗi, vui lòng thử lại sau." + "\"}");
         } finally {
             out.flush();
         }

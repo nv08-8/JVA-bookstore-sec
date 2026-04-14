@@ -37,7 +37,7 @@ public class AdminCommissionsServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+            out.write("{\"error\":\"" + "Đã xảy ra lỗi, vui lòng thử lại sau." + "\"}");
         } finally {
             out.flush();
         }
@@ -67,7 +67,7 @@ public class AdminCommissionsServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+            out.write("{\"error\":\"" + "Đã xảy ra lỗi, vui lòng thử lại sau." + "\"}");
         } finally {
             out.flush();
         }

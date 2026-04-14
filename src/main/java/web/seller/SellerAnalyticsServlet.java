@@ -46,7 +46,7 @@ public class SellerAnalyticsServlet extends HttpServlet {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error resolving shop id", e);
             resp.setStatus(SC_INTERNAL_SERVER_ERROR);
-            out.write(gson.toJson(Map.of("success", false, "message", "Database error: " + e.getMessage())));
+            out.write(gson.toJson(Map.of("success", false, "message", "Đã xảy ra lỗi, vui lòng thử lại sau.")));
             return;
         }
 
@@ -72,7 +72,7 @@ public class SellerAnalyticsServlet extends HttpServlet {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error in /api/seller/analytics", e);
             resp.setStatus(SC_INTERNAL_SERVER_ERROR);
-            out.write(gson.toJson(Map.of("success", false, "message", "Database error: " + e.getMessage())));
+            out.write(gson.toJson(Map.of("success", false, "message", "Đã xảy ra lỗi, vui lòng thử lại sau.")));
         }
     }
 

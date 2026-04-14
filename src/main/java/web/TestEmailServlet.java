@@ -38,7 +38,7 @@ public class TestEmailServlet extends HttpServlet {
             System.err.println("Error in TestEmailServlet: " + e.getMessage());
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"Failed to send email: " + e.getMessage() + "\"}");
+            out.write("{\"error\":\"Đã xảy ra lỗi, vui lòng thử lại sau." + "\"}");
         } finally {
             out.flush();
         }

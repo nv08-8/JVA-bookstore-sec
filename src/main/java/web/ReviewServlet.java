@@ -86,7 +86,7 @@ public class ReviewServlet extends HttpServlet {
                 }
             } catch (IOException uploadEx) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write(gson.toJson(buildError(uploadEx.getMessage())));
+                response.getWriter().write(gson.toJson(buildError("Đã xảy ra lỗi, vui lòng thử lại sau.")));
                 return;
             }
             if (payload.removeMedia) {
@@ -309,7 +309,7 @@ public class ReviewServlet extends HttpServlet {
     private void handleServerError(HttpServletResponse response, Exception ex) throws IOException {
         ex.printStackTrace();
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        response.getWriter().write(gson.toJson(buildError("Có lỗi xảy ra: " + ex.getMessage())));
+        response.getWriter().write(gson.toJson(buildError("Đã xảy ra lỗi, vui lòng thử lại sau.")));
     }
 
     private static final class ReviewPayload {

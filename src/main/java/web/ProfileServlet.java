@@ -100,7 +100,7 @@ public class ProfileServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "Database error: " + ex.getMessage());
+            errorResponse.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
             response.getWriter().write(gson.toJson(errorResponse));
         }
     }
@@ -191,7 +191,7 @@ public class ProfileServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "Database error: " + ex.getMessage());
+            errorResponse.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
             response.getWriter().write(gson.toJson(errorResponse));
         }
     }
@@ -224,7 +224,7 @@ public class ProfileServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "Database error: " + ex.getMessage());
+            errorResponse.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
             response.getWriter().write(gson.toJson(errorResponse));
         }
     }
@@ -270,7 +270,7 @@ public class ProfileServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "Database error: " + ex.getMessage());
+            errorResponse.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
             response.getWriter().write(gson.toJson(errorResponse));
         }
     }
@@ -322,7 +322,7 @@ public class ProfileServlet extends HttpServlet {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             responseMap.put("success", false);
-            responseMap.put("message", "Database error: " + e.getMessage());
+            responseMap.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
         }
         
         response.getWriter().write(gson.toJson(responseMap));
@@ -407,7 +407,7 @@ public class ProfileServlet extends HttpServlet {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             responseMap.put("success", false);
-            responseMap.put("message", "Database error: " + e.getMessage());
+            responseMap.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
         }
         
         response.getWriter().write(gson.toJson(responseMap));
@@ -465,7 +465,7 @@ public class ProfileServlet extends HttpServlet {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             responseMap.put("success", false);
-            responseMap.put("message", "Database error: " + e.getMessage());
+            responseMap.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
         }
         
         response.getWriter().write(gson.toJson(responseMap));
@@ -545,7 +545,7 @@ public class ProfileServlet extends HttpServlet {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             responseMap.put("success", false);
-            responseMap.put("message", "Database error: " + e.getMessage());
+            responseMap.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
         } catch (Exception e) {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -705,7 +705,7 @@ public class ProfileServlet extends HttpServlet {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             responseMap.put("success", false);
-            responseMap.put("message", "Database error: " + e.getMessage());
+            responseMap.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
         } catch (Exception e) {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -836,7 +836,7 @@ public class ProfileServlet extends HttpServlet {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             responseMap.put("success", false);
-            responseMap.put("message", "Database error: " + e.getMessage());
+            responseMap.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
         } catch (Exception e) {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

@@ -152,7 +152,7 @@ public class ShopRegistrationServlet extends HttpServlet {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Lỗi SQL trong /api/seller/register-shop", e);
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write(gson.toJson(Map.of("success", false, "message", "Lỗi cơ sở dữ liệu: " + e.getMessage())));
+            out.write(gson.toJson(Map.of("success", false, "message", "Đã xảy ra lỗi, vui lòng thử lại sau.")));
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Lỗi không xác định trong /api/seller/register-shop", e);
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

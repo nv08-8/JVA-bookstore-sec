@@ -46,7 +46,7 @@ public class ResetServlet extends HttpServlet {
         } catch (SQLException e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             try (PrintWriter out = resp.getWriter()) {
-                out.write("{\"error\":\"Database error: " + e.getMessage() + "\"}");
+                out.write("{\"error\":\"Đã xảy ra lỗi, vui lòng thử lại sau." + "\"}");
             }
         }
     }

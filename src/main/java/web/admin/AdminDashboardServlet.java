@@ -71,7 +71,7 @@ public class AdminDashboardServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.addProperty("success", false);
-            response.addProperty("error", e.getMessage());
+            response.addProperty("error", "Đã xảy ra lỗi, vui lòng thử lại sau.");
         }
 
         out.write(response.toString());

@@ -60,7 +60,7 @@ public class ShipperApiServlet extends HttpServlet {
                 return;
             }
         } catch (SQLException ex) {
-            writeJson(resp, 500, err("SERVER_ERROR", ex.getMessage()));
+            writeJson(resp, 500, err("SERVER_ERROR", "Đã xảy ra lỗi, vui lòng thử lại sau."));
             return;
         }
 
@@ -161,7 +161,7 @@ public class ShipperApiServlet extends HttpServlet {
             writeJson(resp, 404, err("NOT_FOUND", "Unknown endpoint: " + path));
         } catch (Exception e) {
             e.printStackTrace();
-            writeJson(resp, 500, err("SERVER_ERROR", e.getMessage()));
+            writeJson(resp, 500, err("SERVER_ERROR", "Đã xảy ra lỗi, vui lòng thử lại sau."));
         }
     }
 
@@ -252,7 +252,7 @@ public class ShipperApiServlet extends HttpServlet {
                             FileStorageUtil.StoredFile stored = FileStorageUtil.storeShipmentEvidence(evidencePart);
                             evidenceUrl = stored.getPublicUrl();
                         } catch (IOException io) {
-                            writeJson(resp, 400, err("INVALID_MEDIA", io.getMessage()));
+                            writeJson(resp, 400, err("INVALID_MEDIA", "Đã xảy ra lỗi, vui lòng thử lại sau."));
                             return;
                         }
                         codCollected = parseBoolean(req.getParameter("codCollected"));
@@ -282,7 +282,7 @@ public class ShipperApiServlet extends HttpServlet {
             writeJson(resp, 404, err("NOT_FOUND", "Unknown endpoint: " + path));
         } catch (Exception e) {
             e.printStackTrace();
-            writeJson(resp, 500, err("SERVER_ERROR", e.getMessage()));
+            writeJson(resp, 500, err("SERVER_ERROR", "Đã xảy ra lỗi, vui lòng thử lại sau."));
         }
     }
 

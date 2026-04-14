@@ -37,7 +37,7 @@ public class AdminCategoriesServlet extends HttpServlet {
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"" + e.getMessage() + "\"}");
+            out.write("{\"error\":\"Đã xảy ra lỗi, vui lòng thử lại sau.\"}");
         } finally {
             out.flush();
         }
@@ -84,7 +84,7 @@ public class AdminCategoriesServlet extends HttpServlet {
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"" + e.getMessage() + "\"}");
+            out.write("{\"error\":\"Đã xảy ra lỗi, vui lòng thử lại sau.\"}");
         } finally {
             out.flush();
         }

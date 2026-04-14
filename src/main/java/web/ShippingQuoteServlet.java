@@ -79,7 +79,7 @@ public class ShippingQuoteServlet extends HttpServlet {
             resp.getWriter().write(gson.toJson(payload));
         } catch (SQLException ex) {
             ex.printStackTrace();
-            writeError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "KhA'ng tA*v �'A���c phA- v��-n chuy���n: " + ex.getMessage());
+            writeError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi, vui lòng thử lại sau.");
         }
     }
 

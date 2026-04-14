@@ -59,7 +59,7 @@ public class AdminOrdersServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             Map<String, Object> body = new HashMap<>();
             body.put("success", false);
-            body.put("message", "Database error: " + ex.getMessage());
+            body.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
             resp.getWriter().write(gson.toJson(body));
         }
     }
@@ -96,7 +96,7 @@ public class AdminOrdersServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             Map<String, Object> body = new HashMap<>();
             body.put("success", false);
-            body.put("message", ex.getMessage());
+            body.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
             resp.getWriter().write(gson.toJson(body));
         }
     }

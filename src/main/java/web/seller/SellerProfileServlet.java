@@ -67,7 +67,7 @@ public class SellerProfileServlet extends HttpServlet {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error in doGet /api/seller/profile", e);
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write(gson.toJson(java.util.Map.of("success", false, "message", "Database error: " + e.getMessage())));
+            out.write(gson.toJson(java.util.Map.of("success", false, "message", "Đã xảy ra lỗi, vui lòng thử lại sau.")));
         } finally {
             out.flush();
         }
@@ -110,7 +110,7 @@ public class SellerProfileServlet extends HttpServlet {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error in doPost /api/seller/profile", e);
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write(gson.toJson(java.util.Map.of("success", false, "message", "Database error: " + e.getMessage())));
+            out.write(gson.toJson(java.util.Map.of("success", false, "message", "Đã xảy ra lỗi, vui lòng thử lại sau.")));
         } finally {
             out.flush();
         }
