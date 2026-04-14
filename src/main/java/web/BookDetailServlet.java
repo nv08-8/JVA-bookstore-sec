@@ -149,7 +149,7 @@ public class BookDetailServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            req.setAttribute("error", e.getMessage());
+            req.setAttribute("error", "Không thể tải thông tin sách, vui lòng thử lại sau.");
         }
 
         RequestDispatcher rd = req.getRequestDispatcher("/book-detail.jsp");

@@ -161,15 +161,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ======================
     // 🔹 Sidebar toggle
     // ======================
-    const sidebarToggle = document.getElementById("sidebarToggle");
-    const sidebar = document.getElementById("accordionSidebar");
-    if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener("click", (e) => {
-            e.preventDefault();
-            document.body.classList.toggle("sidebar-toggled");
-            sidebar.classList.toggle("toggled");
-        });
-    }
+    // Sidebar toggle handler is now in AdSideBar.jsp
+    // (toggles 'show' class which is defined in CSS)
 
     // ======================
     // 🔹 Highlight menu active

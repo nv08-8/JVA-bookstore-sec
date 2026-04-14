@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page isELIgnored="true" %>
+<%@ page isELIgnored="false" %>
 <%
   String ctx = request.getContextPath();
 %>
@@ -10,13 +10,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Bookish Admin</title>
     
-    <!-- Bootstrap CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
-    <!-- Font Awesome -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" integrity="sha384-9MhbyIRcBVQiiC7FSd7T38oJNj2Zh+EfxS7/vjhBi4OOT78NlHSnzM31EZRWR1LZ" crossorigin="anonymous"></script>
-    <!-- Google Fonts -->
+
     <script nonce="${requestScope.csp_nonce}">
         window.appConfig = window.appConfig || {};
         window.appConfig.contextPath = '<%=ctx%>';
@@ -390,16 +390,16 @@
 </head>
 <body>
 <div id="wrapper">
-    <!-- Include Header -->
+
     <%@ include file="/WEB-INF/includes/admin/header.jsp" %>
 
     <div id="content-wrapper">
-        <!-- Include Sidebar -->
+
         <%@ include file="/WEB-INF/includes/admin/AdSideBar.jsp" %>
 
         <div id="content">
             <div class="container-fluid">
-                <!-- Page Title -->
+
                 <div class="page-title">
                     <h1>
                         <i class="fas fa-chart-line" style="color: #f59e0b;"></i>
@@ -408,7 +408,7 @@
                     <p>Tổng hợp thông tin kinh doanh từ hệ thống</p>
                 </div>
 
-                <!-- Stats Grid -->
+
                 <div class="stats-grid">
                     <div class="stat-card users">
                         <div class="stat-content">

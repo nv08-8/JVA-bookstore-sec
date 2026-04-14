@@ -101,6 +101,16 @@ public class EncodingFilter implements Filter {
             httpResp.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
             httpResp.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
 
+            // Cache-Control: ngăn trình duyệt/proxy cache response chứa dữ liệu nhạy cảm
+            // Áp dụng cho API endpoints; static resource tự quản lý cache của mình
+            if (request instanceof HttpServletRequest) {
+                String uri = ((HttpServletRequest) request).getRequestURI();
+                if (uri != null && uri.contains("/api/")) {
+                    httpResp.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+                    httpResp.setHeader("Pragma", "no-cache");
+                }
+            }
+
             String contentType = httpResp.getContentType();
             if (contentType != null && contentType.startsWith("text/")) {
                 httpResp.setContentType(contentType.split(";")[0] + "; charset=" + UTF8);

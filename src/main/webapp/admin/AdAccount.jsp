@@ -10,13 +10,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý tài khoản - Bookish Admin</title>
     
-    <!-- Bootstrap CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
-    <!-- Font Awesome -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
-    <!-- Feather Icons -->
+
     <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
-    <!-- Google Fonts -->
+
     <script nonce="${requestScope.csp_nonce}">
         window.appConfig = window.appConfig || {};
         window.appConfig.contextPath = '${pageContext.request.contextPath}';
@@ -721,22 +721,22 @@
 <body>
 
 <div id="wrapper">
-    <!-- Include Sidebar -->
+
     <%@ include file="/WEB-INF/includes/admin/AdSideBar.jsp" %>
 
     <div id="content-wrapper">
-        <!-- Include Header -->
+
         <%@ include file="/WEB-INF/includes/admin/header.jsp" %>
 
         <div id="content">
             <div class="container-fluid">
-                <!-- Page Title -->
+
                 <div class="page-title">
                     <h1>Quản lý tài khoản</h1>
                     <p>Quản lý và theo dõi tất cả tài khoản người dùng trong hệ thống</p>
                 </div>
 
-                <!-- Stats Grid -->
+
                 <div class="stats-grid">
                     <div class="stat-box total">
                         <div class="stat-icon">
@@ -758,14 +758,14 @@
                     </div>
                 </div>
 
-                <!-- Main Card -->
+
                 <div class="card-custom">
-                    <!-- Card Header -->
+
                     <div class="card-header-custom">
                         <h2>Danh sách người dùng</h2>
                     </div>
 
-                    <!-- Filter Bar -->
+
                     <div class="filter-bar">
                         <div class="filter-form">
                             <select id="searchType" class="btn-custom" style="background: white; color: #4b5563; border: 1px solid #e5e7eb;">
@@ -803,7 +803,7 @@
                         </div>
                     </div>
 
-                    <!-- Table Wrapper -->
+
                     <div class="table-wrapper">
                         <div id="loadingState" class="loading-state" style="display: none;">
                             <div class="spinner"></div>
@@ -827,7 +827,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="User">
-                                    <!-- Data will be loaded dynamically -->
+
                                 </tbody>
                             </table>
 
@@ -842,7 +842,7 @@
             </div>
         </div>
 
-        <!-- Include Footer -->
+
         <%@ include file="/WEB-INF/includes/admin/footer.jsp" %>
     </div>
 </div>
