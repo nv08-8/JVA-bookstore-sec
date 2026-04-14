@@ -76,7 +76,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
                     <div class="flex items-center mb-4">
-                        <img src="http://static.photos/people/100x100/1" alt="Reader" class="w-12 h-12 rounded-full mr-4 object-cover">
+                        <img src="https://static.photos/people/100x100/1" alt="Reader" class="w-12 h-12 rounded-full mr-4 object-cover">
                         <div>
                             <h4 class="font-bold">Sarah Johnson</h4>
                             <div class="flex text-amber-500">
@@ -92,7 +92,7 @@
                 </div>
                 <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
                     <div class="flex items-center mb-4">
-                        <img src="http://static.photos/people/100x100/2" alt="Reader" class="w-12 h-12 rounded-full mr-4 object-cover">
+                        <img src="https://static.photos/people/100x100/2" alt="Reader" class="w-12 h-12 rounded-full mr-4 object-cover">
                         <div>
                             <h4 class="font-bold">Michael Chen</h4>
                             <div class="flex text-amber-500">
@@ -108,7 +108,7 @@
                 </div>
                 <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
                     <div class="flex items-center mb-4">
-                        <img src="http://static.photos/people/100x100/3" alt="Reader" class="w-12 h-12 rounded-full mr-4 object-cover">
+                        <img src="https://static.photos/people/100x100/3" alt="Reader" class="w-12 h-12 rounded-full mr-4 object-cover">
                         <div>
                             <h4 class="font-bold">Emma Rodriguez</h4>
                             <div class="flex text-amber-500">

@@ -88,6 +88,9 @@ public class EncodingFilter implements Filter {
 
             httpResp.setHeader("Content-Security-Policy", csp);
 
+            // Chống Timestamp Disclosure: ẩn Server header
+            httpResp.setHeader("Server", "Bookish");
+
             // Chống Clickjacking: cấm nhúng trang vào iframe từ bất kỳ origin nào
             httpResp.setHeader("X-Frame-Options", "DENY");
 
