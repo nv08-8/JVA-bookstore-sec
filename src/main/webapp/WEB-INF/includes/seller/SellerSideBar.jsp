@@ -1,6 +1,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<style>
+<style nonce="${requestScope.csp_nonce}">
     /* Simple seller sidebar adapted from admin styles */
     .seller-sidebar {
         background: white;
@@ -50,7 +50,7 @@
 </div>
 
 <!-- Small script to mark active link -->
-<script>
+<script nonce="${requestScope.csp_nonce}">
     document.addEventListener('DOMContentLoaded', function(){
         var path = window.location.pathname || '';
         document.querySelectorAll('.seller-sidebar .nav a').forEach(function(a){

@@ -295,7 +295,7 @@
     </c:if>
   </div>
 
-  <script>
+  <script nonce="${requestScope.csp_nonce}">
     (function (window, document) {
       'use strict';
 

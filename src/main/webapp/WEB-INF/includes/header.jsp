@@ -11,7 +11,7 @@
         <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
         <script src="<%= request.getContextPath() %>/assets/js/tailwindcss-cdn.js"></script>
         <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
-        <style>
+        <style nonce="${requestScope.csp_nonce}">
             body {
                 font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             }
@@ -168,7 +168,7 @@
             </div>
         </div>
     </div>
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
         document.addEventListener('DOMContentLoaded', function () {
             var menuBtn = document.getElementById('mobileMenuButton');
             var mobileMenu = document.getElementById('mobileMenu');

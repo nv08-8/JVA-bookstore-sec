@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page isELIgnored="true" %>
 <%@ page import="java.net.URLEncoder" %>
 <%
@@ -170,9 +170,9 @@
 
 </div>
 
-<script>feather.replace();</script>
+<script nonce="${requestScope.csp_nonce}">feather.replace();</script>
 
-<script>
+<script nonce="${requestScope.csp_nonce}">
   const ctx = '<%=ctx%>';
   const id = '<%=sidEscaped%>';
 

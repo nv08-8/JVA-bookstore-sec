@@ -17,7 +17,7 @@
     <!-- Feather Icons -->
     <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
     
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         * {
             margin: 0;
             padding: 0;
@@ -633,14 +633,14 @@
     </div>
 </div>
 
-<script>
+<script nonce="${requestScope.csp_nonce}">
     window.appConfig = window.appConfig || {};
     window.appConfig.contextPath = '${pageContext.request.contextPath}';
 </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
 <script src="${pageContext.request.contextPath}/assets/js/seller/SellerOrders.js"></script>
-<script>
+<script nonce="${requestScope.csp_nonce}">
     if (typeof feather !== "undefined") feather.replace();
 </script>
 </body>

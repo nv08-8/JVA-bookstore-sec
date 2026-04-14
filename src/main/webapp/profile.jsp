@@ -1,7 +1,12 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="true" %>
 <%@ page import="utils.DBUtil" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<c:set var="pageTitle" value="Hồ sơ của tôi" />
+<%
+    String cspNonce = (String) request.getAttribute("csp_nonce");
+    if (cspNonce == null) {
+        cspNonce = "";
+    }
+%>
 <!DOCTYPE html>
 <html lang="vi">
 <%@ include file="/WEB-INF/includes/header.jsp" %>
@@ -9,7 +14,7 @@
 <!-- Load Bootstrap CSS locally for this page (kept for existing layout) -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
-<style>
+<style nonce="${requestScope.csp_nonce}">
     #addressModal .modal-body {
         max-height: calc(100vh - 220px);
         overflow-y: auto;
@@ -456,7 +461,7 @@
     <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1050;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-    <script>
+    <script nonce="<%= cspNonce %>">
         const contextPath = '<%= request.getContextPath() %>';
         let currentUser = null;
         const addressState = {
@@ -568,6 +573,18 @@
             const reviewMediaRemoveBtn = document.getElementById('reviewMediaRemoveBtn');
             if (reviewMediaRemoveBtn) {
                 reviewMediaRemoveBtn.addEventListener('click', handleReviewMediaRemove);
+            }
+
+            // Event delegation for order detail buttons
+            const orderHistoryContent = document.getElementById('orderHistoryContent');
+            if (orderHistoryContent) {
+                orderHistoryContent.addEventListener('click', function(e) {
+                    const btn = e.target.closest('[data-order-id]');
+                    if (btn) {
+                        const orderId = btn.getAttribute('data-order-id');
+                        viewOrderDetails(orderId);
+                    }
+                });
             }
 
             loadUserProfile();
@@ -815,7 +832,7 @@
                         <td>${formatDate(order.orderDate)}</td>
                         <td class="fw-semibold text-primary">${formatCurrency(order.totalAmount)}</td>
                         <td><span class="badge ${badgeClass}">${escapeHtml(getStatusLabel(order.status))}</span></td>
-                        <td class="text-end"><button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails(${order.id})"><i class="fas fa-eye me-1"></i>Xem</button></td>
+                        <td class="text-end"><button class="btn btn-sm btn-outline-primary" data-order-id="${order.id}"><i class="fas fa-eye me-1"></i>Xem</button></td>
                     </tr>
                 `;
             });

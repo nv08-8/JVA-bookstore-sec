@@ -17,7 +17,7 @@
     <!-- Feather Icons -->
     <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
 
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         * {
             margin: 0;
             padding: 0;
@@ -555,7 +555,7 @@
 </div>
 
 <!-- Commission modal (custom) -->
-<style>
+<style nonce="${requestScope.csp_nonce}">
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9998; }
     .modal-overlay.active { display: block; }
     .modal-box { display: none; position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 680px; max-width: 95%; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }

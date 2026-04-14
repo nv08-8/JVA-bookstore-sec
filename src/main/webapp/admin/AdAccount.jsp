@@ -17,12 +17,12 @@
     <!-- Feather Icons -->
     <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
     <!-- Google Fonts -->
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
         window.appConfig = window.appConfig || {};
         window.appConfig.contextPath = '${pageContext.request.contextPath}';
     </script>
     
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         * {
             margin: 0;
             padding: 0;

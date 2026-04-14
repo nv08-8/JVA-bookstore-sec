@@ -14,7 +14,7 @@
     
     <%-- Thư viện biểu đồ (Cần thiết) --%>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js" integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha" crossorigin="anonymous"></script>
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         /* ... (CSS tùy chỉnh) ... */
         .analytics-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 20px; }
         .chart-container { position: relative; height: 40vh; width: 100%; }
@@ -54,7 +54,7 @@
         </div>
     </div>
     
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
         // const API_URL = '<%= request.getContextPath() %>/api/seller/analytics';
         // const SHOP_ID = ${shopId};
 

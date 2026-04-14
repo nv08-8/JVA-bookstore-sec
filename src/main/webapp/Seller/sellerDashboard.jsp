@@ -66,7 +66,7 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
     function logout() {
         try {
         localStorage.removeItem('seller_token');
@@ -147,7 +147,7 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
     function logout() {
         try {
         localStorage.removeItem('seller_token');
@@ -181,7 +181,7 @@
     <title>Seller Dashboard - Bookish Bliss Haven</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js" integrity="sha384-qEqAs1VsN9WH2myXDbiP2wGGIttL9bMRZBKCl54ZnzpDlVqbYANP9vMaoT/wvQcf" crossorigin="anonymous"></script>
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         * {
             margin: 0;
             padding: 0;
@@ -583,7 +583,7 @@
             </div>
         </div>
     </div>
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
         // Initialize Feather Icons
         feather.replace();
 
@@ -606,7 +606,7 @@
         });
 
     </script>
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
     function logout() {
         try {
         localStorage.removeItem('seller_token');

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Đăng bài viết mới</title>
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         body {
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
@@ -79,7 +79,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="${requestScope.csp_nonce}">
 const API_URL = '<%= request.getContextPath() %>/api/seller/posts';
 
 document.getElementById('postForm').addEventListener('submit', async function(e) {

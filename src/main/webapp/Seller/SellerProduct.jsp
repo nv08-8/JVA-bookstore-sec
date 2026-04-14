@@ -21,7 +21,7 @@
     <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
     
     <%-- Đảm bảo bạn include CSS tùy chỉnh của mình (nếu cần) --%>
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         body {
             background: #f8f8f8;
             font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -424,7 +424,7 @@
 </div>
 
 <%-- CHÚ Ý: Sử dụng JS mới là SellerProduct.js, không phải AdProduct.js --%>
-<script>
+<script nonce="${requestScope.csp_nonce}">
     window.appConfig = window.appConfig || {};
     window.appConfig.contextPath = '${pageContext.request.contextPath}';
     window.appConfig.shopId = '<c:out value="${shopId}" />';
@@ -432,7 +432,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
 <script src="${pageContext.request.contextPath}/assets/js/seller/SellerProduct.js"></script>
-<script>
+<script nonce="${requestScope.csp_nonce}">
     feather.replace(); // Khởi tạo icons nếu cần
 </script>
 </body>

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css" />
     <decorator:head/>
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         /* Minimal fallback if asset not served */
         body { background-color: #f5f6fb; }
     </style>
@@ -71,7 +71,7 @@
             <div><i class="fas fa-phone-volume me-1"></i> 1900 9999 · <i class="fas fa-envelope me-1"></i> hello@gocxep.vn</div>
         </div>
     </footer>
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
         document.getElementById('year').textContent = new Date().getFullYear();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>

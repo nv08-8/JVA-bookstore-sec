@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng ký Shop - Bookish Bliss Haven</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         * {
             margin: 0;
             padding: 0;
@@ -216,7 +216,7 @@
         </div>
     </div>
     
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
         const API_URL = '<%= request.getContextPath() %>/api/seller/register-shop';
         //const API_URL = '<%= request.getContextPath() %>/api/seller/request-approval';
 

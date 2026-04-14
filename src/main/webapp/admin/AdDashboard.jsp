@@ -17,12 +17,12 @@
     <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" integrity="sha384-9MhbyIRcBVQiiC7FSd7T38oJNj2Zh+EfxS7/vjhBi4OOT78NlHSnzM31EZRWR1LZ" crossorigin="anonymous"></script>
     <!-- Google Fonts -->
-    <script>
+    <script nonce="${requestScope.csp_nonce}">
         window.appConfig = window.appConfig || {};
         window.appConfig.contextPath = '<%=ctx%>';
     </script>
     
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         * {
             margin: 0;
             padding: 0;

@@ -3,7 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
-<style>
+<style nonce="${requestScope.csp_nonce}">
     /* Modern Clean Sidebar */
     .sidebar {
         background: white;
@@ -366,7 +366,7 @@
 <!-- Overlay -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<script>
+<script nonce="${requestScope.csp_nonce}">
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('accordionSidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');

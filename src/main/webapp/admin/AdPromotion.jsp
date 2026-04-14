@@ -17,7 +17,7 @@
     <!-- Feather Icons -->
     <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
     
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         * {
             margin: 0;
             padding: 0;

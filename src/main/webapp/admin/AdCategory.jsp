@@ -17,7 +17,7 @@
     <!-- Feather Icons -->
     <script src="<%= request.getContextPath() %>/assets/js/feather-icons.min.js"></script>
     
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         * {
             margin: 0;
             padding: 0;
@@ -564,7 +564,7 @@
 </div>
 
 <!-- Category modal (custom, no bootstrap JS dependency) -->
-<style>
+<style nonce="${requestScope.csp_nonce}">
     /* Modal overlay */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9998; }
     .modal-overlay.active { display: block; }

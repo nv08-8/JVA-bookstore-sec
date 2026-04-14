@@ -10,7 +10,7 @@
     <title>Ho tro khach hang - Bookish Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" integrity="sha384-PPIZEGYM1v8zp5Py7UjFb79S58UeqCL9pYVnVPURKEqvioPROaVAJKKLzvH2rDnI" crossorigin="anonymous">
-    <style>
+    <style nonce="${requestScope.csp_nonce}">
         body { background: #f5f5f5; font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
         .card-chat { border-radius: 18px; border: none; box-shadow: 0 12px 35px -18px rgba(15, 23, 42, 0.35); }
         .conversation-item { transition: background .15s ease; border-left: 4px solid transparent; }
