@@ -314,8 +314,7 @@ public final class FileStorageUtil {
 
     private static String generateFileName(String extension) {
         String suffix = extension != null && !extension.isEmpty() ? "." + extension : "";
-        // Dùng UUID thuần túy — không dùng epoch timestamp để tránh Timestamp Disclosure (CWE-200)
-        String base = UUID.randomUUID().toString().replace('-', '_');
+        String base = Instant.now().toEpochMilli() + "-" + UUID.randomUUID().toString().replace('-', '_');
         return base + suffix;
     }
 

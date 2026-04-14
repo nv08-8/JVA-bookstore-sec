@@ -39,9 +39,16 @@ public class AdminShippersServlet extends HttpServlet {
                 out.write("{\"error\":\"Invalid action\"}");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); // In log cho Heroku để xem lỗi SQL thật
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"Đã xảy ra lỗi, vui lòng thử lại sau.\"}");
+            out.write("{\"error\":\"" 
+                + e.getMessage()
+                    .replace("\\", "\\\\")   // escape dấu backslash
+                    .replace("\"", "\\\"")    // escape dấu nháy kép
+                    .replace("\n", "\\n")     // escape xuống dòng
+                    .replace("\r", "\\r")     // escape carriage return
+                + "\"}");
+
         } finally {
             out.flush();
         }
@@ -70,9 +77,15 @@ public class AdminShippersServlet extends HttpServlet {
                 out.write("{\"error\":\"Invalid action\"}");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); // In log cho Heroku để xem lỗi SQL thật
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.write("{\"error\":\"Đã xảy ra lỗi, vui lòng thử lại sau.\"}");
+            out.write("{\"error\":\"" 
+                + e.getMessage()
+                    .replace("\\", "\\\\")   // escape dấu backslash
+                    .replace("\"", "\\\"")    // escape dấu nháy kép
+                    .replace("\n", "\\n")     // escape xuống dòng
+                    .replace("\r", "\\r")     // escape carriage return
+                + "\"}");
         } finally {
             out.flush();
         }

@@ -14,7 +14,6 @@ if not exist "%KEYSTORE_PATH%" (
 )
 
 echo Building project...
-set "MAVEN_OPTS=-Xms256m -Xmx512m"
 call mvn clean package
 
 if %ERRORLEVEL% NEQ 0 (

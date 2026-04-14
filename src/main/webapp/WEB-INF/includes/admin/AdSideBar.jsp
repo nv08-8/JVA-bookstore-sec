@@ -256,6 +256,11 @@
     }
 </style>
 
+<!-- Toggle Button -->
+<button class="sidebar-toggle-btn" id="sidebarToggle" title="Mở/Đóng Menu">
+    <i class="fas fa-chevron-right"></i>
+</button>
+
 <!-- Sidebar -->
 <div class="sidebar" id="accordionSidebar">
     <!-- Brand -->
@@ -361,53 +366,25 @@
 <!-- Overlay -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<!-- Toggle Button (positioned after sidebar for CSS sibling selector) -->
-<button class="sidebar-toggle-btn" id="sidebarToggle" title="Mở/Đóng Menu">
-    <i class="fas fa-chevron-right"></i>
-</button>
-
 <script nonce="${requestScope.csp_nonce}">
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('accordionSidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
     const overlay = document.getElementById('sidebarOverlay');
-    const contentWrapper = document.getElementById('content-wrapper');
-
-    if (!sidebar || !sidebarToggle) {
-        return;
-    }
-
+    
     // Toggle sidebar
-    sidebarToggle.addEventListener('click', function(e) {
+    sidebarToggle?.addEventListener('click', e => {
         e.preventDefault();
         sidebar.classList.toggle('show');
-
-        if (contentWrapper) {
-            if (sidebar.classList.contains('show')) {
-                contentWrapper.style.marginLeft = '260px';
-            } else {
-                contentWrapper.style.marginLeft = '0';
-            }
-        }
     });
 
     // Overlay click -> close sidebar
-    if (overlay) {
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('show');
-            if (contentWrapper) {
-                contentWrapper.style.marginLeft = '0';
-            }
-        });
-    }
+    overlay?.addEventListener('click', () => sidebar.classList.remove('show'));
 
     // ESC key -> close
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && sidebar.classList.contains('show')) {
             sidebar.classList.remove('show');
-            if (contentWrapper) {
-                contentWrapper.style.marginLeft = '0';
-            }
         }
     });
 
@@ -426,12 +403,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
+            console.log('Đăng xuất...');
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin_username');
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_role');
             localStorage.removeItem('auth_username');
             sessionStorage.clear();
+
             const contextPath = '<%= request.getContextPath() %>';
             window.location.href = contextPath + '/login.jsp';
         });
