@@ -12,8 +12,6 @@ import java.io.IOException;
 @WebFilter(filterName = "JwtFilter", urlPatterns = {"/api/*"})
 public class JwtFilter implements Filter {
 
-    private static final String DEFAULT_ADMIN_SECRET = "dev-secret-key-change-me";
-
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         // Initialization if needed
@@ -165,7 +163,8 @@ public class JwtFilter implements Filter {
                 return env;
             }
         }
-        return DEFAULT_ADMIN_SECRET;
+        // NO DEFAULT SECRET - MUST BE SET IN ENVIRONMENT VARIABLE
+        return null;
     }
 
     private String trimToNull(String value) {
