@@ -246,8 +246,18 @@ public class CheckoutServlet extends HttpServlet {
 
     private void handleServerError(HttpServletResponse response, Exception ex) throws IOException {
         ex.printStackTrace();
-        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        response.getWriter().write(gson.toJson(buildError("Có lỗi xảy ra: " + ex.getMessage())));
+        String message = ex.getMessage();
+        
+        // Kiểm tra nếu là inventory error từ OrderDAO
+        if (message != null && (message.contains("tồn kho") || message.contains("stock") || message.contains("không đủ"))) {
+            // Return 400 Bad Request với inventory message
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write(gson.toJson(buildError("Sách đã hết hàng hoặc không đủ số lượng")));
+        } else {
+            // Generic server error
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write(gson.toJson(buildError("Có lỗi xảy ra: " + message)));
+        }
     }
 
     private boolean isUserAllowedToShop(HttpServletRequest request) throws SQLException {
