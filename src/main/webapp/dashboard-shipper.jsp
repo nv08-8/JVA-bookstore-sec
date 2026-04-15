@@ -318,8 +318,7 @@
               '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">' + badge + '</td>' +
               '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">' + last + '</td>' +
               '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">' +
-                '<button class="inline-flex items-center px-3 py-2 rounded-md border border-amber-700 bg-amber-700 text-white hover:bg-amber-600 text-sm" ' +
-                        'onclick="location.href=\'' + detailUrl + '\'">Chi tiết</button>' +
+                '<a class="inline-flex items-center px-3 py-2 rounded-md border border-amber-700 bg-amber-700 text-white hover:bg-amber-600 text-sm" href="' + detailUrl + '">Chi tiết</a>' +
               '</td>' +
             '</tr>';
           tbody.insertAdjacentHTML('beforeend', rowHtml);

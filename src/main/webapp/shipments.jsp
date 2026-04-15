@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page isELIgnored="true" %>
+<%@ page isELIgnored="false" %>
 <%
   String ctx = request.getContextPath();
 %>
@@ -187,10 +187,9 @@
         '<td class="px-3 py-2 whitespace-nowrap text-sm">' + badge + '</td>' +
         '<td class="px-3 py-2 whitespace-nowrap text-sm">' + esc(last) + '</td>' +
         '<td class="px-3 py-2 whitespace-nowrap text-sm">' +
-          '<button class="inline-flex items-center px-3 py-2 rounded-md border border-amber-700 bg-amber-700 text-white hover:bg-amber-600 text-sm" ' +
-                  'onclick="location.href=\'' + detailHref.replace(/'/g,'&#39;') + '\'">' +
+          '<a class="inline-flex items-center px-3 py-2 rounded-md border border-amber-700 bg-amber-700 text-white hover:bg-amber-600 text-sm" href="' + esc(detailHref) + '">' +
             'Chi tiết' +
-          '</button>' +
+          '</a>' +
         '</td>' +
       '</tr>';
         tbody.insertAdjacentHTML('beforeend', row);
