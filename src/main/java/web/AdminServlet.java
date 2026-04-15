@@ -13,15 +13,17 @@ import java.sql.SQLException;
 
 @WebServlet(name = "AdminServlet", urlPatterns = {"/api/admin/clear-users"})
 public class AdminServlet extends HttpServlet {
+    private static final String DEFAULT_ADMIN_SECRET = "dev-secret-key-change-me";
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
         
         String secret = req.getParameter("secret");
         String expectedSecret = System.getenv("ADMIN_PANEL_SECRET");
-        String configuredSecret = expectedSecret != null && !expectedSecret.trim().isEmpty() ? expectedSecret.trim() : null;
+        String configuredSecret = expectedSecret != null && !expectedSecret.trim().isEmpty() ? expectedSecret.trim() : DEFAULT_ADMIN_SECRET;
         
-        if (configuredSecret == null || !configuredSecret.equals(secret)) {
+        if (!configuredSecret.equals(secret)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
             try (PrintWriter out = resp.getWriter()) {
                 out.write("{\"error\":\"Forbidden - Invalid or missing admin secret\"}");

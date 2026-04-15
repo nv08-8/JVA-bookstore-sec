@@ -47,6 +47,16 @@
         <location>/error.jsp</location>
     </error-page>
 
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error.jsp</location>
+    </error-page>
+
+    <error-page>
+        <error-code>405</error-code>
+        <location>/error.jsp</location>
+    </error-page>
+
     <!-- JSP Servlet Configuration for Java 11 -->
     <servlet>
         <servlet-name>jsp</servlet-name>

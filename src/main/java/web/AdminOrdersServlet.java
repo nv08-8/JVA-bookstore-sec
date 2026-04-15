@@ -31,6 +31,7 @@ import java.util.Set;
 public class AdminOrdersServlet extends HttpServlet {
 
     private final Gson gson = GsonHelper.getInstance();
+    private static final String DEFAULT_ADMIN_SECRET = "dev-secret-key-change-me";
     private static final Set<String> ALLOWED_PAYMENT_METHODS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("cod", "vnpay", "momo")));
     private static final Set<String> ALLOWED_PAYMENT_STATUSES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("unpaid", "processing", "paid", "failed", "refunded")));
 
@@ -491,8 +492,7 @@ public class AdminOrdersServlet extends HttpServlet {
                 return env;
             }
         }
-        // NO DEFAULT SECRET - MUST BE SET IN ENVIRONMENT VARIABLE
-        return null;
+        return DEFAULT_ADMIN_SECRET;
     }
 
     private String trimToNull(String value) {

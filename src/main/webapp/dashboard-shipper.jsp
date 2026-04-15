@@ -1,5 +1,4 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page isELIgnored="true" %>
 <%
   String ctx = request.getContextPath();
 %>
@@ -160,7 +159,7 @@
     if (!res.ok) {
       if (res.status === 401) { localStorage.clear(); window.location.replace(ctx + '/login.jsp'); return; }
       const body = await res.text();
-      throw new Error(`HTTP ${res.status} – ${ct.includes('json') ? body : body.slice(0, 120)}`);
+      throw new Error('HTTP ' + res.status + ' - ' + (ct.includes('json') ? body : body.slice(0, 120)));
     }
     return ct.includes('json') ? res.json() : res.text();
   }
@@ -203,7 +202,7 @@
         if (s === 'IN_TRANSIT') { cls = 'bg-amber-100 text-amber-700'; label = 'Đang vận chuyển'; break; }
         if (s === 'PENDING')    { cls = 'bg-gray-100 text-gray-700';  label = 'Chờ xử lý'; break; }
     }
-    return `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cls}">${label}</span>`;
+    return '<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ' + cls + '">' + label + '</span>';
   }
 
   // Shipper info (tạm từ localStorage/JWT)
@@ -291,9 +290,13 @@
 
       renderChart(stats);
       renderShipperInfo(stats); // fill ô nhỏ bằng stats
-      await loadProfile();      // điền full_name/phone/email từ DB
+      try {
+        await loadProfile();      // điền full_name/phone/email từ DB
+      } catch (profileErr) {
+        console.warn('Khong tai duoc profile shipper:', profileErr);
+      }
 
-      const list = await authFetch(`${apiBase}/shipments?status=all&page=1&size=10`);
+      const list = await authFetch(apiBase + '/shipments?status=all&page=1&size=10');
       const tbody = document.getElementById('recent-shipments');
       const items = list.items || [];
 
@@ -306,18 +309,20 @@
           const lastRaw = (it.lastUpdateAt || it.last_update_at || '').toString();
           const last = lastRaw ? timeago(lastRaw) : '-';
           const badge = statusBadge(it.status);
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-gray-50">
-              <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">#${it.id}</td>
-              <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">${it.orderCode||'-'}</td>
-              <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">${it.receiverName||it.customerName||'-'}</td>
-              <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">${badge}</td>
-              <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">${last}</td>
-              <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
-                <button class="inline-flex items-center px-3 py-2 rounded-md border border-amber-700 bg-amber-700 text-white hover:bg-amber-600 text-sm"
-                        onclick="location.href='${ctx}/shipment-detail.jsp?id=${it.id}'">Chi tiết</button>
-              </td>
-            </tr>`);
+          const detailUrl = ctx + '/shipment-detail.jsp?id=' + encodeURIComponent(it.id);
+          const rowHtml =
+            '<tr class="hover:bg-gray-50">' +
+              '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">#' + it.id + '</td>' +
+              '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">' + (it.orderCode || '-') + '</td>' +
+              '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">' + (it.receiverName || it.customerName || '-') + '</td>' +
+              '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">' + badge + '</td>' +
+              '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">' + last + '</td>' +
+              '<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">' +
+                '<button class="inline-flex items-center px-3 py-2 rounded-md border border-amber-700 bg-amber-700 text-white hover:bg-amber-600 text-sm" ' +
+                        'onclick="location.href=\'' + detailUrl + '\'">Chi tiết</button>' +
+              '</td>' +
+            '</tr>';
+          tbody.insertAdjacentHTML('beforeend', rowHtml);
         });
       }
     }catch(e){

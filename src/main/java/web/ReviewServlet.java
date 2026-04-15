@@ -22,8 +22,18 @@ import java.util.List;
 import java.util.Map;
 
 @WebServlet(name = "ReviewServlet", urlPatterns = {"/api/reviews", "/api/reviews/*"})
-@MultipartConfig
+@MultipartConfig(
+        fileSizeThreshold = 256 * 1024,
+        maxFileSize = 21L * 1024 * 1024,
+        maxRequestSize = 22L * 1024 * 1024
+)
 public class ReviewServlet extends HttpServlet {
+
+    private static final int MAX_JSON_BODY_CHARS = 64 * 1024;
+    private static final int MAX_TITLE_LENGTH = 255;
+    private static final int MAX_CONTENT_LENGTH = 5000;
+    private static final int MAX_MEDIA_URL_LENGTH = 500;
+    private static final int MAX_MEDIA_TYPE_LENGTH = 10;
 
     private final Gson gson = GsonHelper.getInstance();
 
@@ -61,6 +71,7 @@ public class ReviewServlet extends HttpServlet {
             } else {
                 payload = parsePayloadFromJson(readJson(request));
             }
+            normalizeAndValidatePayload(payload);
             if (payload.bookId == null || payload.rating < 1 || payload.rating > 5) {
                 sendBadRequest(response, "Dữ liệu đánh giá không hợp lệ");
                 return;
@@ -104,7 +115,15 @@ public class ReviewServlet extends HttpServlet {
                     FileStorageUtil.deleteReviewMedia(existing.mediaUrl, contextPath);
                 }
             }
+        } catch (IllegalArgumentException ex) {
+            sendBadRequest(response, ex.getMessage());
+        } catch (IllegalStateException ex) {
+            sendPayloadTooLarge(response);
         } catch (SQLException ex) {
+            if (isValidationSqlException(ex)) {
+                sendBadRequest(response, ex.getMessage());
+                return;
+            }
             handleServerError(response, ex);
         }
     }
@@ -224,12 +243,53 @@ public class ReviewServlet extends HttpServlet {
             String line;
             while ((line = reader.readLine()) != null) {
                 json.append(line);
+                if (json.length() > MAX_JSON_BODY_CHARS) {
+                    throw new IllegalArgumentException("Dữ liệu gửi lên quá lớn");
+                }
             }
         }
         if (json.length() == 0) {
             return new HashMap<>();
         }
         return gson.fromJson(json.toString(), new TypeToken<Map<String, Object>>() {}.getType());
+    }
+
+    private void normalizeAndValidatePayload(ReviewPayload payload) {
+        if (payload == null) {
+            throw new IllegalArgumentException("Dữ liệu đánh giá không hợp lệ");
+        }
+        payload.title = normalizeOptional(payload.title, MAX_TITLE_LENGTH, "Tiêu đề đánh giá quá dài");
+        payload.content = normalizeOptional(payload.content, MAX_CONTENT_LENGTH, "Nội dung đánh giá quá dài");
+        payload.mediaUrl = normalizeOptional(payload.mediaUrl, MAX_MEDIA_URL_LENGTH, "Đường dẫn media quá dài");
+        payload.mediaType = normalizeOptional(payload.mediaType, MAX_MEDIA_TYPE_LENGTH, "Loại media không hợp lệ");
+
+        if (payload.content != null && payload.content.length() < 50) {
+            throw new IllegalArgumentException("Nội dung đánh giá phải có ít nhất 50 ký tự");
+        }
+        if (payload.mediaType != null) {
+            String normalizedType = payload.mediaType.toLowerCase();
+            if (!"image".equals(normalizedType) && !"video".equals(normalizedType)) {
+                throw new IllegalArgumentException("Loại nội dung đính kèm không hợp lệ. Chỉ hỗ trợ image hoặc video");
+            }
+            payload.mediaType = normalizedType;
+        }
+        if (payload.mediaUrl == null) {
+            payload.mediaType = null;
+        }
+    }
+
+    private String normalizeOptional(String value, int maxLength, String tooLongMessage) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        if (normalized.length() > maxLength) {
+            throw new IllegalArgumentException(tooLongMessage);
+        }
+        return normalized;
     }
 
     private List<String> getPathSegments(String pathInfo) {
@@ -294,6 +354,11 @@ public class ReviewServlet extends HttpServlet {
         response.getWriter().write(gson.toJson(buildError(message)));
     }
 
+    private void sendPayloadTooLarge(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+        response.getWriter().write(gson.toJson(buildError("Dữ liệu gửi lên quá lớn")));
+    }
+
     private void sendNotFound(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         response.getWriter().write(gson.toJson(buildError("Endpoint không hợp lệ")));
@@ -310,6 +375,16 @@ public class ReviewServlet extends HttpServlet {
         ex.printStackTrace();
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         response.getWriter().write(gson.toJson(buildError("Đã xảy ra lỗi, vui lòng thử lại sau.")));
+    }
+
+    private boolean isValidationSqlException(SQLException ex) {
+        if (ex == null || ex.getMessage() == null) {
+            return false;
+        }
+        String message = ex.getMessage().toLowerCase();
+        return message.contains("bạn chỉ có thể đánh giá")
+                || message.contains("nội dung đánh giá")
+                || message.contains("loại nội dung đính kèm");
     }
 
     private static final class ReviewPayload {
